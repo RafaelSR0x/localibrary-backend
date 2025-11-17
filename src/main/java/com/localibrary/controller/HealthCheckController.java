@@ -1,17 +1,14 @@
 package com.localibrary.controller;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
-@CrossOrigin(origins = "*", maxAge = 3600)
-public class AuthController {
+@RequestMapping("/")
+public class HealthCheckController {
     /**
      * Endpoint de teste (opcional).
      * Verifica se a API está rodando.
-     *
-     * @return Mensagem de boas-vindas
+     * * @return Mensagem de boas-vindas
      */
     @GetMapping
     public String healthCheck() {

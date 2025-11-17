@@ -1,6 +1,7 @@
 package com.localibrary.entity;
 
 import com.localibrary.enums.RoleAdmin;
+import com.localibrary.enums.StatusAdmin;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -41,6 +42,10 @@ public class Admin {
     @Enumerated(EnumType.STRING)
     @Column(name = "role_admin", nullable = false)
     private RoleAdmin roleAdmin;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StatusAdmin status;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

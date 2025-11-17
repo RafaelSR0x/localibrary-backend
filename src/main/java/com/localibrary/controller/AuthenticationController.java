@@ -1,10 +1,12 @@
 package com.localibrary.controller;
 
+import com.localibrary.dto.BibliotecaRegistrationDTO;
 import com.localibrary.dto.request.LoginRequestDTO;
 import com.localibrary.dto.response.LoginResponseDTO;
 import com.localibrary.service.AuthenticationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,5 +28,13 @@ public class AuthenticationController {
         return ResponseEntity.ok(response);
     }
 
-    // O endpoint /auth/cadastro (RF-08) será implementado na Sprint 2
+    // Endpoint de Cadastro (RF-08)
+    @PostMapping("/cadastro")
+    public ResponseEntity<Void> registerBiblioteca(
+            @Valid @RequestBody BibliotecaRegistrationDTO registrationDTO
+    ) {
+        authenticationService.registerBiblioteca(registrationDTO);
+        // Retorna 201 Created (padrão para criação de recurso)
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
 }
