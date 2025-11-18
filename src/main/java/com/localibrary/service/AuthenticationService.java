@@ -120,6 +120,7 @@ public class AuthenticationService {
         credenciais.setEmail(dto.getEmail());
         credenciais.setSenha(passwordEncoder.encode(dto.getSenha()));
         credenciais.setBiblioteca(savedBiblioteca);
+        savedBiblioteca.setCredencial(credenciais);
         credenciaisRepository.save(credenciais);
     }
 
