@@ -36,4 +36,10 @@ public interface BibliotecaLivroRepository extends JpaRepository<BibliotecaLivro
      * Remove associação entre biblioteca e livro (RF-12)
      */
     void deleteByBibliotecaIdAndLivroBaseId(Long bibliotecaId, Long livroBaseId);
+
+    /**
+     * Soma total de exemplares em todo o sistema
+     */
+    @Query("SELECT SUM(bl.quantidade) FROM BibliotecaLivro bl")
+    Long sumTotalExemplares();
 }

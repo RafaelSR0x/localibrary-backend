@@ -1,12 +1,20 @@
 package com.localibrary.service;
 
+import com.localibrary.dto.BibliotecaAdminDTO;
+import com.localibrary.dto.DashboardDTO;
+import com.localibrary.dto.UpdateStatusBibliotecaDTO;
 import com.localibrary.dto.response.AdminResponseDTO;
 import com.localibrary.dto.request.CreateModeratorRequestDTO;
 import com.localibrary.dto.request.UpdateStatusRequestDTO;
 import com.localibrary.entity.Admin;
+import com.localibrary.entity.Biblioteca;
 import com.localibrary.enums.RoleAdmin;
 import com.localibrary.enums.StatusAdmin;
+import com.localibrary.enums.StatusBiblioteca;
 import com.localibrary.repository.AdminRepository;
+import com.localibrary.repository.BibliotecaLivroRepository;
+import com.localibrary.repository.BibliotecaRepository;
+import com.localibrary.repository.LivroBaseRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +32,74 @@ public class AdminService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private BibliotecaRepository bibliotecaRepository;
+
+    @Autowired
+    private LivroBaseRepository livroBaseRepository;
+
+    @Autowired
+    private BibliotecaLivroRepository bibliotecaLivroRepository;
+
+    /**
+     * RF-16: Dashboard Administrativo
+     */
+    public DashboardDTO getDashboardData() {
+        long totalLibs = bibliotecaRepository.count();
+        long activeLibs = bibliotecaRepository.countByStatus(StatusBiblioteca.ATIVO);
+        long pendingLibs = bibliotecaRepository.countByStatus(StatusBiblioteca.PENDENTE);
+        long totalBooks = livroBaseRepository.count();
+        Long totalCopies = bibliotecaLivroRepository.sumTotalExemplares();
+
+        return DashboardDTO.builder()
+                .totalBibliotecas(totalLibs)
+                .bibliotecasAtivas(activeLibs)
+                .bibliotecasPendentes(pendingLibs)
+                .totalLivrosCadastrados(totalBooks)
+                .totalExemplares(totalCopies != null ? totalCopies : 0)
+                .build();
+    }
+
+    /**
+     * RF-17, RF-19: Listar bibliotecas filtrando por status (opcional)
+     */
+    public List<BibliotecaAdminDTO> listBibliotecas(StatusBiblioteca status) {
+        List<Biblioteca> libs;
+        if (status != null) {
+            libs = bibliotecaRepository.findByStatus(status);
+        } else {
+            libs = bibliotecaRepository.findAll();
+        }
+
+        return libs.stream()
+                .map(BibliotecaAdminDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * RF-18, RF-20: Alterar status da biblioteca (Aprovar/Bloquear)
+     */
+    public BibliotecaAdminDTO updateBibliotecaStatus(Long id, UpdateStatusBibliotecaDTO dto) {
+        Biblioteca lib = bibliotecaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Biblioteca não encontrada."));
+
+        lib.setStatus(dto.getStatus());
+        Biblioteca saved = bibliotecaRepository.save(lib);
+
+        return new BibliotecaAdminDTO(saved);
+    }
+
+    /**
+     * RF-21: Excluir biblioteca
+     */
+    public void deleteBiblioteca(Long id) {
+        if (!bibliotecaRepository.existsById(id)) {
+            throw new EntityNotFoundException("Biblioteca não encontrada.");
+        }
+        // O CascadeType.ALL na entidade cuidará do Endereço, Credenciais e Livros
+        bibliotecaRepository.deleteById(id);
+    }
 
     // RF-23: Cadastrar novos moderadores
     public AdminResponseDTO createModerator(CreateModeratorRequestDTO dto) {

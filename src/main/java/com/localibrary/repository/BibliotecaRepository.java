@@ -28,6 +28,11 @@ public interface BibliotecaRepository extends JpaRepository<Biblioteca, Long> {
     List<Biblioteca> findByStatus(StatusBiblioteca status);
 
     /**
+     * Contagens para o Dashboard
+     */
+    long countByStatus(StatusBiblioteca status);
+
+    /**
      * Busca bibliotecas ativas na cidade de São Paulo (RN-09, RN-13)
      */
     @Query("SELECT b FROM Biblioteca b " +
