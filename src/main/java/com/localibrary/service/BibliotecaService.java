@@ -1,15 +1,20 @@
 package com.localibrary.service;
 
-import com.localibrary.dto.BibliotecaDetalhesDTO;
+import com.localibrary.dto.*;
+import com.localibrary.dto.request.AddLivroRequestDTO;
 import com.localibrary.dto.response.BibliotecaResponseDTO;
-import com.localibrary.entity.Biblioteca;
+import com.localibrary.entity.*;
 import com.localibrary.enums.StatusBiblioteca;
-import com.localibrary.repository.BibliotecaRepository;
+import com.localibrary.repository.*;
+import com.localibrary.util.SecurityUtil;
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,6 +22,27 @@ public class BibliotecaService {
 
     @Autowired
     private BibliotecaRepository bibliotecaRepository;
+
+    @Autowired
+    private SecurityUtil securityUtil; // Helper RN-01
+
+    @Autowired
+    private BibliotecaLivroRepository bibliotecaLivroRepository;
+
+    @Autowired
+    private LivroBaseRepository livroBaseRepository;
+
+    @Autowired
+    private GeneroRepository generoRepository; // Para validar os IDs de gênero
+
+    @Autowired
+    private LivroGeneroRepository livroGeneroRepository;
+
+    @Autowired
+    private GeolocationService geolocationService; // Da Sprint 2
+
+    @Autowired
+    private EnderecoRepository enderecoRepository;
 
     /**
      * RF-04: Exibir mapa com todas as bibliotecas ATIVAS em SP
@@ -44,5 +70,191 @@ public class BibliotecaService {
         }
 
         return new BibliotecaDetalhesDTO(biblioteca);
+    }
+
+    /**
+     * RF-13: Exibir dados detalhados da biblioteca logada (para edição)
+     */
+    public BibliotecaDetalhesDTO getMyBibliotecaDetails(Long idBiblioteca) {
+        // RN-01: Verifica se o ID da URL é o mesmo do token
+        securityUtil.checkHasPermission(idBiblioteca);
+
+        Biblioteca biblioteca = findBibliotecaById(idBiblioteca);
+
+        // Diferente do RF-07, aqui podemos mostrar mesmo se PENDENTE
+        return new BibliotecaDetalhesDTO(biblioteca);
+    }
+
+    /**
+     * RF-14: Permitir a atualização dos dados de uma biblioteca
+     * (RN-14: Re-valida endereço)
+     */
+    @Transactional
+    public BibliotecaDetalhesDTO updateMyBiblioteca(Long idBiblioteca, UpdateBibliotecaDTO dto) {
+        // RN-01: Verifica permissão
+        securityUtil.checkHasPermission(idBiblioteca);
+
+        Biblioteca biblioteca = findBibliotecaById(idBiblioteca);
+
+        // 1. Atualiza dados da Biblioteca
+        biblioteca.setNomeFantasia(dto.getNomeFantasia());
+        biblioteca.setRazaoSocial(dto.getRazaoSocial());
+        biblioteca.setTelefone(dto.getTelefone());
+        biblioteca.setCategoria(dto.getCategoria());
+        biblioteca.setSite(dto.getSite());
+        biblioteca.setFotoBiblioteca(dto.getFotoBiblioteca());
+
+        // 2. Re-valida Endereço (RN-14)
+        Endereco endereco = biblioteca.getEndereco();
+        endereco.setCep(dto.getCep());
+        endereco.setLogradouro(dto.getLogradouro());
+        endereco.setNumero(dto.getNumero());
+        endereco.setComplemento(dto.getComplemento());
+        endereco.setBairro(dto.getBairro());
+        endereco.setCidade(dto.getCidade());
+        endereco.setEstado(dto.getEstado());
+
+        // 3. Chama Geolocation API (RN-17)
+        Coordinates coords = geolocationService.getCoordinatesFromAddress(
+                        dto.getCep(), dto.getLogradouro(), dto.getNumero(), dto.getCidade())
+                .orElseThrow(() -> new IllegalArgumentException("Endereço inválido ou não encontrado."));
+
+        endereco.setLatitude(coords.latitude());
+        endereco.setLongitude(coords.longitude());
+
+        // 4. Salva as mudanças (Endereço é salvo por cascata da Biblioteca)
+        Biblioteca bibliotecaAtualizada = bibliotecaRepository.save(biblioteca);
+
+        return new BibliotecaDetalhesDTO(bibliotecaAtualizada);
+    }
+
+    /**
+     * RF-10: Listar todos os livros disponíveis em uma biblioteca específica
+     */
+    public List<LivroAcervoDTO> listMyLivros(Long idBiblioteca) {
+        // RN-01: Verifica permissão
+        securityUtil.checkHasPermission(idBiblioteca);
+
+        // Usa a query do repositório (findByBiblioteca_Id)
+        return bibliotecaLivroRepository.findByBibliotecaId(idBiblioteca).stream()
+                .map(LivroAcervoDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * RF-11: Permitir que bibliotecas adicionem livros ao seu acervo
+     */
+    @Transactional
+    public LivroAcervoDTO addLivroToMyAcervo(Long idBiblioteca, AddLivroRequestDTO dto) {
+        // RN-01: Verifica permissão
+        securityUtil.checkHasPermission(idBiblioteca);
+
+        Biblioteca biblioteca = findBibliotecaById(idBiblioteca);
+
+        // 1. Encontra ou Cria o LivroBase
+        LivroBase livroBase = livroBaseRepository.findByIsbn(dto.getIsbn())
+                .orElseGet(() -> createNewLivroBase(dto)); // Cria se não existir
+
+        // 2. Valida e Seta Gêneros (só se for um livro novo)
+        if (livroBase.getId() == null || livroBase.getGeneros().isEmpty()) {
+            setGenerosForLivro(livroBase, dto.getGenerosIds());
+        }
+
+        // 3. Salva o LivroBase (se for novo ou se os gêneros foram add)
+        LivroBase savedLivroBase = livroBaseRepository.save(livroBase);
+
+        // 4. Cria a Relação (BibliotecaLivro)
+        if (bibliotecaLivroRepository.existsByBibliotecaIdAndLivroBaseId(idBiblioteca, savedLivroBase.getId())) {
+            throw new EntityExistsException("Este livro já existe no seu acervo. Use o 'Atualizar Quantidade'.");
+        }
+
+        BibliotecaLivro newRelacao = new BibliotecaLivro();
+        newRelacao.setBiblioteca(biblioteca);
+        newRelacao.setLivroBase(savedLivroBase);
+        newRelacao.setQuantidade(dto.getQuantidade());
+
+        BibliotecaLivro savedRelacao = bibliotecaLivroRepository.save(newRelacao);
+
+        return new LivroAcervoDTO(savedRelacao);
+    }
+
+    /**
+     * RF-12: Permitir que bibliotecas removam livros de seu acervo
+     */
+    @Transactional
+    public void removeLivroFromMyAcervo(Long idBiblioteca, Long idLivro) {
+        // RN-01: Verifica permissão
+        securityUtil.checkHasPermission(idBiblioteca);
+
+        // Usa o método delete customizado do seu repositório
+        if (!bibliotecaLivroRepository.existsByBibliotecaIdAndLivroBaseId(idBiblioteca, idLivro)) {
+            throw new EntityNotFoundException("Livro não encontrado no acervo desta biblioteca.");
+        }
+
+        bibliotecaLivroRepository.deleteByBibliotecaIdAndLivroBaseId(idBiblioteca, idLivro);
+    }
+
+    /**
+     * Atualiza a quantidade de um livro no acervo
+     */
+    @Transactional
+    public LivroAcervoDTO updateQuantidadeLivro(Long idBiblioteca, Long idLivro, UpdateQuantidadeDTO dto) {
+        // RN-01: Verifica permissão
+        securityUtil.checkHasPermission(idBiblioteca);
+
+        BibliotecaLivro relacao = bibliotecaLivroRepository.findByBibliotecaIdAndLivroBaseId(idBiblioteca, idLivro)
+                .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado no acervo."));
+
+        // Se quantidade for 0, remove (alternativa ao RF-12)
+        if (dto.getQuantidade() == 0) {
+            bibliotecaLivroRepository.delete(relacao);
+            return null; // Retorna nulo para o controller enviar 204
+        }
+
+        relacao.setQuantidade(dto.getQuantidade());
+        BibliotecaLivro savedRelacao = bibliotecaLivroRepository.save(relacao);
+        return new LivroAcervoDTO(savedRelacao);
+    }
+
+    // --- Métodos Auxiliares Privados ---
+
+    private Biblioteca findBibliotecaById(Long id) {
+        return bibliotecaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Biblioteca não encontrada com id: " + id));
+    }
+
+    private LivroBase createNewLivroBase(AddLivroRequestDTO dto) {
+        LivroBase livro = new LivroBase();
+        livro.setIsbn(dto.getIsbn());
+        livro.setTitulo(dto.getTitulo());
+        livro.setAutor(dto.getAutor());
+        livro.setEditora(dto.getEditora());
+        livro.setAnoPublicacao(dto.getAnoPublicacao());
+        livro.setCapa(dto.getCapa());
+        livro.setResumo(dto.getResumo());
+        return livro;
+    }
+
+    private void setGenerosForLivro(LivroBase livroBase, Set<Long> generosIds) {
+        // (Garante que a lista de gêneros não é nula, baseado na sua entidade)
+        if (livroBase.getGeneros() == null) {
+            livroBase.setGeneros(new java.util.ArrayList<>());
+        }
+
+        // 1. Limpa gêneros antigos (se houver)
+        livroGeneroRepository.deleteByLivroBaseId(livroBase.getId()); // Usa a query do repo
+        livroBase.getGeneros().clear();
+
+        // 2. Busca os novos gêneros e adiciona
+        for (Long generoId : generosIds) {
+            Genero genero = generoRepository.findById(generoId)
+                    .orElseThrow(() -> new EntityNotFoundException("Gênero com ID " + generoId + " não encontrado."));
+
+            LivroGenero lgRelacao = new LivroGenero();
+            lgRelacao.setLivroBase(livroBase);
+            lgRelacao.setGenero(genero);
+
+            livroBase.getGeneros().add(lgRelacao);
+        }
     }
 }

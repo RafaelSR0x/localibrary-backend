@@ -58,8 +58,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/bibliotecas/{id_biblioteca}").permitAll() // RF-07
 
                         // Rotas de Biblioteca (ROLE_BIBLIOTECA)
-                        // (Serão implementadas na Sprint 4, mas já protegidas)
-                        .requestMatchers("/bibliotecas/{id_biblioteca}/**").hasRole("BIBLIOTECA")
+                        .requestMatchers(HttpMethod.GET, "/bibliotecas/{id_biblioteca}/profile").hasRole("BIBLIOTECA") // RF-13
+                        .requestMatchers(HttpMethod.PUT, "/bibliotecas/{id_biblioteca}").hasRole("BIBLIOTECA") // RF-14
+                        .requestMatchers(HttpMethod.GET, "/bibliotecas/{id_biblioteca}/livros").hasRole("BIBLIOTECA") // RF-10
+                        .requestMatchers(HttpMethod.POST, "/bibliotecas/{id_biblioteca}/livros").hasRole("BIBLIOTECA") // RF-11
+                        .requestMatchers(HttpMethod.DELETE, "/bibliotecas/{id_biblioteca}/livros/{id_livro}").hasRole("BIBLIOTECA") // RF-12
+                        .requestMatchers(HttpMethod.PATCH, "/bibliotecas/{id_biblioteca}/livros/{id_livro}").hasRole("BIBLIOTECA") // Opcional
 
                         // Rotas de Admin (ROLE_ADMIN, ROLE_MODERADOR)
                         // (Serão implementadas nas Sprints 2 e 5)
