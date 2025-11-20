@@ -45,7 +45,7 @@ public interface BibliotecaRepository extends JpaRepository<Biblioteca, Long> {
      */
     @Query("SELECT DISTINCT b FROM Biblioteca b " +
             "JOIN b.livros bl " +
-            "WHERE bl.livroBase.id = :idLivro " +
+            "WHERE bl.livro.id = :idLivro " +
             "AND b.status = 'ATIVO' " +
             "AND b.endereco.cidade = 'São Paulo'")
     List<Biblioteca> findByLivroAndStatusAtivo(@Param("idLivro") Long idLivro);

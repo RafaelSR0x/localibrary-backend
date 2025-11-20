@@ -17,11 +17,11 @@ public interface LivroGeneroRepository extends JpaRepository<LivroGenero, LivroG
     /**
      * Lista gêneros de um livro específico
      */
-    @Query("SELECT lg FROM LivroGenero lg WHERE lg.livroBase.id = :idLivro")
-    List<LivroGenero> findByLivroBaseId(@Param("idLivro") Long idLivro);
+    @Query("SELECT lg FROM LivroGenero lg WHERE lg.livro.id = :idLivro")
+    List<LivroGenero> findByLivroId(@Param("idLivro") Long idLivro);
 
     /**
      * Remove todos os gêneros de um livro (útil para atualização)
      */
-    void deleteByLivroBaseId(Long idLivro);
+    void deleteByLivroId(Long idLivro);
 }

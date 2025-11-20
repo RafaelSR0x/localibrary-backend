@@ -11,7 +11,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * Entidade que representa o relacionamento N:N entre Biblioteca e LivroBase.
+ * Entidade que representa o relacionamento N:N entre Biblioteca e Livro.
  * Indica quais livros estão disponíveis em cada biblioteca e em que quantidade.
  */
 @Entity
@@ -29,8 +29,8 @@ public class BibliotecaLivro {
 
     @Id
     @ManyToOne
-    @JoinColumn(name = "id_livro_base", nullable = false)
-    private LivroBase livroBase;
+    @JoinColumn(name = "id_livro", nullable = false)
+    private Livro livro;
 
     @Column(nullable = false)
     private Integer quantidade = 1;
@@ -51,6 +51,6 @@ public class BibliotecaLivro {
     @AllArgsConstructor
     public static class BibliotecaLivroId implements Serializable {
         private Long biblioteca;
-        private Long livroBase;
+        private Long livro;
     }
 }

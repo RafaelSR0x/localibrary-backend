@@ -16,15 +16,15 @@ import java.util.List;
  * Um livro pode estar disponível em múltiplas bibliotecas.
  */
 @Entity
-@Table(name = "tbl_livro_base")
+@Table(name = "tbl_livro")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LivroBase {
+public class Livro {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_livro_base")
+    @Column(name = "id_livro")
     private Long id;
 
     @Column(nullable = false, length = 255)
@@ -55,14 +55,14 @@ public class LivroBase {
      * Relacionamento OneToMany com BibliotecaLivro
      * Um livro pode estar em múltiplas bibliotecas
      */
-    @OneToMany(mappedBy = "livroBase", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "livro", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BibliotecaLivro> bibliotecas = new ArrayList<>();
 
     /**
      * Relacionamento ManyToMany com Genero (via LivroGenero)
      * Um livro pode ter múltiplos gêneros
      */
-    @OneToMany(mappedBy = "livroBase", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "livro", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LivroGenero> generos = new ArrayList<>();
 
     @CreationTimestamp

@@ -1,6 +1,6 @@
 package com.localibrary.repository;
 
-import com.localibrary.entity.LivroBase;
+import com.localibrary.entity.Livro;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,41 +14,41 @@ import java.util.Optional;
  * Repository para operações com o catálogo global de livros.
  */
 @Repository
-public interface LivroBaseRepository extends JpaRepository<LivroBase, Long> {
+public interface LivroRepository extends JpaRepository<Livro, Long> {
 
     /**
      * Busca livro por ISBN
      */
-    Optional<LivroBase> findByIsbn(String isbn);
+    Optional<Livro> findByIsbn(String isbn);
 
     /**
      * Busca livros por título (RF-02)
      * Busca parcial, insensível a maiúsculas/minúsculas
      */
-    @Query("SELECT l FROM LivroBase l " +
+    @Query("SELECT l FROM Livro l " +
             "WHERE LOWER(l.titulo) LIKE LOWER(CONCAT('%', :titulo, '%'))")
-    List<LivroBase> searchByTitulo(@Param("titulo") String titulo);
+    List<Livro> searchByTitulo(@Param("titulo") String titulo);
 
     /**
      * Busca livros mais populares (RF-03)
      * Livros com maior quantidade total cadastrada nas bibliotecas
      */
-    @Query("SELECT bl.livroBase " +
+    @Query("SELECT bl.livro " +
             "FROM BibliotecaLivro bl " +
             "WHERE bl.biblioteca.status = 'ATIVO' " +
-            "GROUP BY bl.livroBase " +
+            "GROUP BY bl.livro " +
             "ORDER BY SUM(bl.quantidade) DESC")
-    List<LivroBase> findLivrosPopulares(Pageable pageable);
+    List<Livro> findLivrosPopulares(Pageable pageable);
 
     /**
      * Busca livros similares por gênero (para recomendações - RF-05)
      */
-    @Query("SELECT DISTINCT l FROM LivroBase l " +
+    @Query("SELECT DISTINCT l FROM Livro l " +
             "JOIN l.generos lg " +
             "WHERE lg.genero.id IN " +
-            "(SELECT lg2.genero.id FROM LivroGenero lg2 WHERE lg2.livroBase.id = :idLivro) " +
+            "(SELECT lg2.genero.id FROM LivroGenero lg2 WHERE lg2.livro.id = :idLivro) " +
             "AND l.id != :idLivro")
-    List<LivroBase> findLivrosSimilares(@Param("idLivro") Long idLivro, Pageable pageable);
+    List<Livro> findLivrosSimilares(@Param("idLivro") Long idLivro, Pageable pageable);
 
     /**
      * Verifica se ISBN já está cadastrado

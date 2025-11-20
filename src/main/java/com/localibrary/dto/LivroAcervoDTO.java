@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class LivroAcervoDTO {
-    private Long idLivroBase;
+    private Long id;
     private String titulo;
     private String autor;
     private String isbn;
@@ -13,11 +13,11 @@ public class LivroAcervoDTO {
     private int quantidade;
 
     public LivroAcervoDTO(BibliotecaLivro bl) {
-        this.idLivroBase = bl.getLivroBase().getId();
-        this.titulo = bl.getLivroBase().getTitulo();
-        this.autor = bl.getLivroBase().getAutor();
-        this.isbn = bl.getLivroBase().getIsbn();
-        this.capa = bl.getLivroBase().getCapa();
+        this.id = bl.getLivro().getId();
+        this.titulo = bl.getLivro().getTitulo();
+        this.autor = bl.getLivro().getAutor();
+        this.isbn = bl.getLivro().getIsbn();
+        this.capa = bl.getLivro().getCapa();
         this.quantidade = bl.getQuantidade();
     }
 }

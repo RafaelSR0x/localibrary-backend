@@ -11,7 +11,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * Entidade que representa o relacionamento N:N entre LivroBase e Genero.
+ * Entidade que representa o relacionamento N:N entre livro e Genero.
  * Indica quais gêneros literários pertencem a cada livro.
  */
 @Entity
@@ -24,8 +24,8 @@ public class LivroGenero {
 
     @Id
     @ManyToOne
-    @JoinColumn(name = "id_livro_base", nullable = false)
-    private LivroBase livroBase;
+    @JoinColumn(name = "id_livro", nullable = false)
+    private Livro livro;
 
     @Id
     @ManyToOne
@@ -47,7 +47,7 @@ public class LivroGenero {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class LivroGeneroId implements Serializable {
-        private Long livroBase;
+        private Long livro;
         private Long genero;
     }
 }

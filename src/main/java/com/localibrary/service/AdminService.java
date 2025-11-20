@@ -14,7 +14,7 @@ import com.localibrary.enums.StatusBiblioteca;
 import com.localibrary.repository.AdminRepository;
 import com.localibrary.repository.BibliotecaLivroRepository;
 import com.localibrary.repository.BibliotecaRepository;
-import com.localibrary.repository.LivroBaseRepository;
+import com.localibrary.repository.LivroRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +37,7 @@ public class AdminService {
     private BibliotecaRepository bibliotecaRepository;
 
     @Autowired
-    private LivroBaseRepository livroBaseRepository;
+    private LivroRepository livroRepository;
 
     @Autowired
     private BibliotecaLivroRepository bibliotecaLivroRepository;
@@ -49,7 +49,7 @@ public class AdminService {
         long totalLibs = bibliotecaRepository.count();
         long activeLibs = bibliotecaRepository.countByStatus(StatusBiblioteca.ATIVO);
         long pendingLibs = bibliotecaRepository.countByStatus(StatusBiblioteca.PENDENTE);
-        long totalBooks = livroBaseRepository.count();
+        long totalBooks = livroRepository.count();
         Long totalCopies = bibliotecaLivroRepository.sumTotalExemplares();
 
         return DashboardDTO.builder()
@@ -103,7 +103,6 @@ public class AdminService {
 
     // RF-23: Cadastrar novos moderadores
     public AdminResponseDTO createModerator(CreateModeratorRequestDTO dto) {
-        // Validação (RN-04 é tratada pelo SecurityConfig)
         if (adminRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new EntityExistsException("Email já cadastrado.");
         }

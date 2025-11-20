@@ -25,17 +25,17 @@ public interface BibliotecaLivroRepository extends JpaRepository<BibliotecaLivro
     /**
      * Busca relacionamento específico entre biblioteca e livro
      */
-    Optional<BibliotecaLivro> findByBibliotecaIdAndLivroBaseId(Long bibliotecaId, Long livroBaseId);
+    Optional<BibliotecaLivro> findByBibliotecaIdAndLivroId(Long bibliotecaId, Long LivroId);
 
     /**
      * Verifica se livro já está cadastrado na biblioteca
      */
-    boolean existsByBibliotecaIdAndLivroBaseId(Long bibliotecaId, Long livroBaseId);
+    boolean existsByBibliotecaIdAndLivroId(Long bibliotecaId, Long LivroId);
 
     /**
      * Remove associação entre biblioteca e livro (RF-12)
      */
-    void deleteByBibliotecaIdAndLivroBaseId(Long bibliotecaId, Long livroBaseId);
+    void deleteByBibliotecaIdAndLivroId(Long bibliotecaId, Long LivroId);
 
     /**
      * Soma total de exemplares em todo o sistema
@@ -43,5 +43,4 @@ public interface BibliotecaLivroRepository extends JpaRepository<BibliotecaLivro
     @Query("SELECT SUM(bl.quantidade) FROM BibliotecaLivro bl")
     Long sumTotalExemplares();
 
-    List<BibliotecaLivro> findByLivroBase_Id(Long idLivro);
 }

@@ -31,7 +31,7 @@ public class Genero {
     private String nomeGenero;
 
     /**
-     * Relacionamento ManyToMany com LivroBase (via LivroGenero)
+     * Relacionamento ManyToMany com livro (via LivroGenero)
      * Um gênero pode estar associado a múltiplos livros
      */
     @OneToMany(mappedBy = "genero", cascade = CascadeType.ALL, orphanRemoval = true)

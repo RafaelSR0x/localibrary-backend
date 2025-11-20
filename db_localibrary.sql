@@ -78,10 +78,10 @@ CREATE TABLE tbl_credenciais_biblioteca (
 ) ENGINE=InnoDB;
 
 -- ===========================================================
--- 5. Tabela: tbl_livro_base — Catálogo Global de Livros
+-- 5. Tabela: tbl_livro — Catálogo Global de Livros
 -- ===========================================================
-CREATE TABLE tbl_livro_base (
-    id_livro_base BIGINT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE tbl_livro (
+    id_livro BIGINT AUTO_INCREMENT PRIMARY KEY,
     titulo VARCHAR(255) NOT NULL,
     autor VARCHAR(255) NOT NULL,
     isbn VARCHAR(13) NOT NULL UNIQUE,
@@ -99,17 +99,17 @@ CREATE TABLE tbl_livro_base (
 -- ===========================================================
 CREATE TABLE tbl_biblioteca_livro (
     id_biblioteca BIGINT NOT NULL,
-    id_livro_base BIGINT NOT NULL,
+    id_livro BIGINT NOT NULL,
     quantidade INT DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id_biblioteca, id_livro_base),
+    PRIMARY KEY (id_biblioteca, id_livro),
     CONSTRAINT fk_bl_biblioteca FOREIGN KEY (id_biblioteca)
         REFERENCES tbl_biblioteca(id_biblioteca)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    CONSTRAINT fk_bl_livro FOREIGN KEY (id_livro_base)
-        REFERENCES tbl_livro_base(id_livro_base)
+    CONSTRAINT fk_bl_livro FOREIGN KEY (id_livro)
+        REFERENCES tbl_livro(id_livro)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 ) ENGINE=InnoDB;
@@ -128,13 +128,13 @@ CREATE TABLE tbl_genero (
 -- 8. Tabela: tbl_livro_genero — Relacionamento Livro ↔ Gênero
 -- ===========================================================
 CREATE TABLE tbl_livro_genero (
-    id_livro_base BIGINT NOT NULL,
+    id_livro BIGINT NOT NULL,
     id_genero BIGINT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id_livro_base, id_genero),
-    CONSTRAINT fk_lg_livro FOREIGN KEY (id_livro_base)
-        REFERENCES tbl_livro_base(id_livro_base)
+    PRIMARY KEY (id_livro, id_genero),
+    CONSTRAINT fk_lg_livro FOREIGN KEY (id_livro)
+        REFERENCES tbl_livro(id_livro)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     CONSTRAINT fk_lg_genero FOREIGN KEY (id_genero)

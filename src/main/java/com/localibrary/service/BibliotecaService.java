@@ -32,7 +32,7 @@ public class BibliotecaService {
     private BibliotecaLivroRepository bibliotecaLivroRepository;
 
     @Autowired
-    private LivroBaseRepository livroBaseRepository;
+    private LivroRepository livroRepository;
 
     @Autowired
     private GeneroRepository generoRepository; // Para validar os IDs de gênero
@@ -93,16 +93,18 @@ public class BibliotecaService {
      */
     @Transactional
     public BibliotecaDetalhesDTO updateMyBiblioteca(Long idBiblioteca, UpdateBibliotecaDTO dto) {
-        // RN-01: Verifica permissão
         securityUtil.checkHasPermission(idBiblioteca);
-
         Biblioteca biblioteca = findBibliotecaById(idBiblioteca);
 
+        // 1. Validações Prévias
         if (!ValidationUtil.isValidCEP(dto.getCep())) {
             throw new IllegalArgumentException(Constants.MSG_CEP_INVALIDO);
         }
+        if (ValidationUtil.isNotEmpty(dto.getTelefone()) && !ValidationUtil.isValidTelefone(dto.getTelefone())) {
+            throw new IllegalArgumentException(Constants.MSG_TELEFONE_INVALIDO);
+        }
 
-        // 1. Atualiza dados da Biblioteca
+        // 2. Atualiza dados
         biblioteca.setNomeFantasia(dto.getNomeFantasia());
         biblioteca.setRazaoSocial(dto.getRazaoSocial());
         biblioteca.setTelefone(dto.getTelefone());
@@ -125,12 +127,15 @@ public class BibliotecaService {
                         dto.getCep(), dto.getLogradouro(), dto.getNumero(), dto.getCidade())
                 .orElseThrow(() -> new IllegalArgumentException("Endereço inválido ou não encontrado."));
 
+        // Validação extra de coordenadas
+        if (!ValidationUtil.isValidCoordinates(coords.latitude().doubleValue(), coords.longitude().doubleValue())) {
+            throw new IllegalArgumentException("Coordenadas inválidas.");
+        }
+
         endereco.setLatitude(coords.latitude());
         endereco.setLongitude(coords.longitude());
 
-        // 4. Salva as mudanças (Endereço é salvo por cascata da Biblioteca)
         Biblioteca bibliotecaAtualizada = bibliotecaRepository.save(biblioteca);
-
         return new BibliotecaDetalhesDTO(bibliotecaAtualizada);
     }
 
@@ -162,26 +167,26 @@ public class BibliotecaService {
             throw new IllegalArgumentException("Ano de publicação inválido ou no futuro.");
         }
 
-        // 1. Encontra ou Cria o LivroBase
-        LivroBase livroBase = livroBaseRepository.findByIsbn(dto.getIsbn())
-                .orElseGet(() -> createNewLivroBase(dto)); // Cria se não existir
+        // 1. Encontra ou Cria o livro
+        Livro livro = livroRepository.findByIsbn(dto.getIsbn())
+                .orElseGet(() -> createNewlivro(dto)); // Cria se não existir
 
         // 2. Valida e Seta Gêneros (só se for um livro novo)
-        if (livroBase.getId() == null || livroBase.getGeneros().isEmpty()) {
-            setGenerosForLivro(livroBase, dto.getGenerosIds());
+        if (livro.getId() == null || livro.getGeneros().isEmpty()) {
+            setGenerosForLivro(livro, dto.getGenerosIds());
         }
 
-        // 3. Salva o LivroBase (se for novo ou se os gêneros foram add)
-        LivroBase savedLivroBase = livroBaseRepository.save(livroBase);
+        // 3. Salva o livro (se for novo ou se os gêneros foram add)
+        Livro savedlivro = livroRepository.save(livro);
 
         // 4. Cria a Relação (BibliotecaLivro)
-        if (bibliotecaLivroRepository.existsByBibliotecaIdAndLivroBaseId(idBiblioteca, savedLivroBase.getId())) {
+        if (bibliotecaLivroRepository.existsByBibliotecaIdAndLivroId(idBiblioteca, savedlivro.getId())) {
             throw new EntityExistsException("Este livro já existe no seu acervo. Use o 'Atualizar Quantidade'.");
         }
 
         BibliotecaLivro newRelacao = new BibliotecaLivro();
         newRelacao.setBiblioteca(biblioteca);
-        newRelacao.setLivroBase(savedLivroBase);
+        newRelacao.setLivro(savedlivro);
         newRelacao.setQuantidade(dto.getQuantidade());
 
         BibliotecaLivro savedRelacao = bibliotecaLivroRepository.save(newRelacao);
@@ -198,11 +203,11 @@ public class BibliotecaService {
         securityUtil.checkHasPermission(idBiblioteca);
 
         // Usa o método delete customizado do seu repositório
-        if (!bibliotecaLivroRepository.existsByBibliotecaIdAndLivroBaseId(idBiblioteca, idLivro)) {
+        if (!bibliotecaLivroRepository.existsByBibliotecaIdAndLivroId(idBiblioteca, idLivro)) {
             throw new EntityNotFoundException("Livro não encontrado no acervo desta biblioteca.");
         }
 
-        bibliotecaLivroRepository.deleteByBibliotecaIdAndLivroBaseId(idBiblioteca, idLivro);
+        bibliotecaLivroRepository.deleteByBibliotecaIdAndLivroId(idBiblioteca, idLivro);
     }
 
     /**
@@ -213,7 +218,7 @@ public class BibliotecaService {
         // RN-01: Verifica permissão
         securityUtil.checkHasPermission(idBiblioteca);
 
-        BibliotecaLivro relacao = bibliotecaLivroRepository.findByBibliotecaIdAndLivroBaseId(idBiblioteca, idLivro)
+        BibliotecaLivro relacao = bibliotecaLivroRepository.findByBibliotecaIdAndLivroId(idBiblioteca, idLivro)
                 .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado no acervo."));
 
         // Se quantidade for 0, remove (alternativa ao RF-12)
@@ -234,8 +239,8 @@ public class BibliotecaService {
                 .orElseThrow(() -> new EntityNotFoundException("Biblioteca não encontrada com id: " + id));
     }
 
-    private LivroBase createNewLivroBase(AddLivroRequestDTO dto) {
-        LivroBase livro = new LivroBase();
+    private Livro createNewlivro(AddLivroRequestDTO dto) {
+        Livro livro = new Livro();
         livro.setIsbn(dto.getIsbn());
         livro.setTitulo(dto.getTitulo());
         livro.setAutor(dto.getAutor());
@@ -246,15 +251,15 @@ public class BibliotecaService {
         return livro;
     }
 
-    private void setGenerosForLivro(LivroBase livroBase, Set<Long> generosIds) {
+    private void setGenerosForLivro(Livro livro, Set<Long> generosIds) {
         // (Garante que a lista de gêneros não é nula, baseado na sua entidade)
-        if (livroBase.getGeneros() == null) {
-            livroBase.setGeneros(new java.util.ArrayList<>());
+        if (livro.getGeneros() == null) {
+            livro.setGeneros(new java.util.ArrayList<>());
         }
 
         // 1. Limpa gêneros antigos (se houver)
-        livroGeneroRepository.deleteByLivroBaseId(livroBase.getId()); // Usa a query do repo
-        livroBase.getGeneros().clear();
+        livroGeneroRepository.deleteByLivroId(livro.getId()); // Usa a query do repo
+        livro.getGeneros().clear();
 
         // 2. Busca os novos gêneros e adiciona
         for (Long generoId : generosIds) {
@@ -262,10 +267,10 @@ public class BibliotecaService {
                     .orElseThrow(() -> new EntityNotFoundException("Gênero com ID " + generoId + " não encontrado."));
 
             LivroGenero lgRelacao = new LivroGenero();
-            lgRelacao.setLivroBase(livroBase);
+            lgRelacao.setLivro(livro);
             lgRelacao.setGenero(genero);
 
-            livroBase.getGeneros().add(lgRelacao);
+            livro.getGeneros().add(lgRelacao);
         }
     }
 }

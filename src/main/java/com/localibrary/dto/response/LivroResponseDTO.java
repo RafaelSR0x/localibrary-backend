@@ -1,6 +1,6 @@
 package com.localibrary.dto.response;
 
-import com.localibrary.entity.LivroBase;
+import com.localibrary.entity.Livro;
 import lombok.Data;
 
 @Data
@@ -10,7 +10,7 @@ public class LivroResponseDTO {
     private String autor;
     private String capa;
 
-    public LivroResponseDTO(LivroBase livro) {
+    public LivroResponseDTO(Livro livro) {
         this.id = livro.getId();
         this.titulo = livro.getTitulo();
         this.autor = livro.getAutor();
