@@ -2,7 +2,13 @@ package com.localibrary.controller;
 
 import com.localibrary.enums.TipoUpload;
 import com.localibrary.service.FileStorageService;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,25 +18,25 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/uploads")
+@Tag(name = "5. Uploads", description = "Serviço de armazenamento de imagens")
+@SecurityRequirement(name = "bearerAuth") // Requer autenticação
 public class UploadController {
 
-    @Autowired
-    private FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService;
 
-    /**
-     * Endpoint para upload de imagens.
-     * Exemplo: POST /uploads/CAPA (form-data: file=imagem.jpg)
-     */
-    @PostMapping("/{tipo}")
+    public UploadController(FileStorageService fileStorageService) {
+        this.fileStorageService = fileStorageService;
+    }
+
+    @Operation(summary = "Enviar Imagem", description = "Faz upload, redimensiona e retorna a URL da imagem.")
+    @PostMapping(value = "/{tipo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> uploadFile(
-            @PathVariable TipoUpload tipo, // O Spring converte a String da URL para o Enum automaticamente!
+            @Parameter(description = "Tipo: CAPA, AUTOR ou BIBLIOTECA") @PathVariable TipoUpload tipo,
+            @Parameter(description = "Arquivo de imagem", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
             @RequestParam("file") MultipartFile file
     ) {
-        // Salva e redimensiona
         String relativePath = fileStorageService.storeFile(file, tipo);
 
-        // Gera a URL completa para o Front-end
-        // Ex: http://localhost:8080/uploads/capas/uuid-123.jpg
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/uploads/")
                 .path(relativePath)

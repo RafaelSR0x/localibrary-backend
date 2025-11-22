@@ -6,6 +6,10 @@ import com.localibrary.dto.request.UpdateStatusRequestDTO;
 import com.localibrary.dto.response.AdminResponseDTO;
 import com.localibrary.enums.StatusBiblioteca;
 import com.localibrary.service.AdminService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +18,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin") // ⬅️ Prefixo Geral (Correto para Sprint 5)
+@RequestMapping("/admin")
+@Tag(name = "2. Administração", description = "Gestão do sistema (Admins e Moderadores)")
+@SecurityRequirement(name = "bearerAuth") // Cadeado para todos os métodos
 public class AdminController {
 
     private final AdminService adminService;
@@ -23,77 +29,58 @@ public class AdminController {
         this.adminService = adminService;
     }
 
-// ==========================================
-    // 🟢 MÉTODOS DA SPRINT 2 (MODERADORES)
-    // ⚠️ Note que adicionamos "/moderadores" aqui!
-    // ==========================================
+    // --- MODERADORES ---
 
-    // RF-23: Cadastro de Moderador
-    // URL Final: POST /admin/moderadores
+    @Operation(summary = "Cadastrar Moderador", description = "Cria um novo usuário com perfil MODERADOR. (Apenas ADMIN)")
     @PostMapping("/moderadores")
-    public ResponseEntity<AdminResponseDTO> createModerator(
-            @Valid @RequestBody CreateModeratorRequestDTO dto
-    ) {
+    public ResponseEntity<AdminResponseDTO> createModerator(@Valid @RequestBody CreateModeratorRequestDTO dto) {
         AdminResponseDTO newModerator = adminService.createModerator(dto);
         return new ResponseEntity<>(newModerator, HttpStatus.CREATED);
     }
 
-    // RF-22: Listar Moderadores
-    // URL Final: GET /admin/moderadores
+    @Operation(summary = "Listar Moderadores", description = "Retorna todos os moderadores do sistema. (Apenas ADMIN)")
     @GetMapping("/moderadores")
     public ResponseEntity<List<AdminResponseDTO>> listModerators() {
-        List<AdminResponseDTO> moderators = adminService.listModerators();
-        return ResponseEntity.ok(moderators);
+        return ResponseEntity.ok(adminService.listModerators());
     }
 
-    // RF-24: Alterar Status de Moderador
+    @Operation(summary = "Atualizar Status de Moderador", description = "Ativa ou inativa um moderador. (Apenas ADMIN)")
     @PatchMapping("/moderadores/{id}")
-    public ResponseEntity<AdminResponseDTO> updateModeratorStatus(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateStatusRequestDTO dto
-    ) {
-        AdminResponseDTO updatedModerator = adminService.updateModeratorStatus(id, dto);
-        return ResponseEntity.ok(updatedModerator);
+    public ResponseEntity<AdminResponseDTO> updateModeratorStatus(@PathVariable Long id, @Valid @RequestBody UpdateStatusRequestDTO dto) {
+        return ResponseEntity.ok(adminService.updateModeratorStatus(id, dto));
     }
 
-    // RF-25: Remover Moderador
+    @Operation(summary = "Excluir Moderador", description = "Remove permanentemente um moderador. (Apenas ADMIN)")
     @DeleteMapping("/moderadores/{id}")
     public ResponseEntity<Void> deleteModerator(@PathVariable Long id) {
         adminService.deleteModerator(id);
         return ResponseEntity.noContent().build();
     }
 
-    // ==========================================
-    // 🔵 MÉTODOS DA SPRINT 5 (DASHBOARD E LIBS)
-    // ==========================================
+    // --- BIBLIOTECAS ---
 
-    // RF-16: Dashboard
-    // URL Final: GET /admin/dashboard
+    @Operation(summary = "Dashboard", description = "Estatísticas gerais do sistema para a tela inicial do Admin.")
     @GetMapping("/dashboard")
     public ResponseEntity<DashboardDTO> getDashboard() {
         return ResponseEntity.ok(adminService.getDashboardData());
     }
 
-    // RF-17, RF-19: Listar Bibliotecas
-    // URL Final: GET /admin/bibliotecas
+    @Operation(summary = "Listar Bibliotecas (Visão Admin)", description = "Lista bibliotecas com dados sensíveis (CNPJ, Email). Permite filtrar por status.")
     @GetMapping("/bibliotecas")
     public ResponseEntity<List<BibliotecaAdminDTO>> listBibliotecas(
+            @Parameter(description = "Filtro opcional: ATIVO, PENDENTE ou INATIVO")
             @RequestParam(required = false) StatusBiblioteca status
     ) {
         return ResponseEntity.ok(adminService.listBibliotecas(status));
     }
 
-    // RF-18, RF-20: Alterar Status (Aprovar/Bloquear)
-    // URL Final: PATCH /admin/bibliotecas/{id}/status
+    @Operation(summary = "Moderar Biblioteca", description = "Aprova (ATIVO), Reprova (INATIVO) ou coloca em análise (PENDENTE).")
     @PatchMapping("/bibliotecas/{id}/status")
-    public ResponseEntity<BibliotecaAdminDTO> updateStatus(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateStatusBibliotecaDTO dto
-    ) {
+    public ResponseEntity<BibliotecaAdminDTO> updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateStatusBibliotecaDTO dto) {
         return ResponseEntity.ok(adminService.updateBibliotecaStatus(id, dto));
     }
 
-    // RF-21: Excluir Biblioteca
+    @Operation(summary = "Excluir Biblioteca", description = "Remove uma biblioteca e todo seu acervo. (Apenas ADMIN)")
     @DeleteMapping("/bibliotecas/{id}")
     public ResponseEntity<Void> deleteBiblioteca(@PathVariable Long id) {
         adminService.deleteBiblioteca(id);

@@ -73,6 +73,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/livros/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/bibliotecas").permitAll()
                         .requestMatchers(HttpMethod.GET, "/bibliotecas/{id_biblioteca}").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                         // --- ROTAS DE BIBLIOTECA (ROLE_BIBLIOTECA) ---
                         .requestMatchers("/bibliotecas/{id_biblioteca}/**").hasRole("BIBLIOTECA")
