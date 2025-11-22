@@ -7,6 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class LoginResponseDTO {
     private String token;
-    private String tokenType = "Bearer";
-    private Long expiresIn; // Duração do token em segundos
+    private String tokenType;
+    private Long expiresIn;
 }

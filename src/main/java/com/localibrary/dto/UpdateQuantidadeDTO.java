@@ -8,5 +8,5 @@ import lombok.Data;
 public class UpdateQuantidadeDTO {
     @NotNull
     @Min(0) // 0 pode significar remover
-    private int quantidade;
+    private Integer quantidade;
 }

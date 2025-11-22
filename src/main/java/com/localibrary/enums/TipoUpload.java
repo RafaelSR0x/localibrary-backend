@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public enum TipoUpload {
-    CAPA("capas", 600, 800),      // Capas de livros (Vertical)
-    AUTOR("autores", 400, 400),   // Foto de perfil (Quadrada)
-    BIBLIOTECA("bibliotecas", 800, 600); // Foto da fachada (Horizontal)
+    CAPA("capas", 600, 800),
+    AUTOR("autores", 400, 400),
+    BIBLIOTECA("bibliotecas", 800, 600);
 
     private final String diretorio;
     private final int largura;

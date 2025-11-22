@@ -3,7 +3,6 @@ package com.localibrary.dto;
 import com.localibrary.enums.CategoriaBiblioteca;
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import org.hibernate.validator.constraints.br.CNPJ;
 
 import static com.localibrary.util.Constants.*;
 

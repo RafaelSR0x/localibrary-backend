@@ -1,7 +1,6 @@
 package com.localibrary.exception;
 
 import com.localibrary.dto.ApiErrorDTO;
-import com.localibrary.util.Constants; // Import Constants
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -14,19 +13,25 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
 
+import static com.localibrary.util.Constants.*;
+
+/**
+ * Manipulador global de exceções.
+ * Captura todas as exceções lançadas pelos controllers e retorna respostas padronizadas.
+ * Atende ao RNF-02: mensagens de erro claras para códigos HTTP.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ApiErrorDTO> handleEntityNotFound(EntityNotFoundException ex) {
-        // Usa mensagem genérica se a exceção não tiver msg, ou concatena
-        String msg = ex.getMessage() != null ? ex.getMessage() : Constants.MSG_NAO_ENCONTRADO;
+        String msg = ex.getMessage() != null ? ex.getMessage() : MSG_NAO_ENCONTRADO;
         return buildResponse(HttpStatus.NOT_FOUND, msg, null);
     }
 
     @ExceptionHandler(EntityExistsException.class)
     public ResponseEntity<ApiErrorDTO> handleEntityExists(EntityExistsException ex) {
-        return buildResponse(HttpStatus.CONFLICT, Constants.MSG_CONFLITO + ": " + ex.getMessage(), null);
+        return buildResponse(HttpStatus.CONFLICT, MSG_CONFLITO + ": " + ex.getMessage(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -34,17 +39,17 @@ public class GlobalExceptionHandler {
         List<String> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(err -> err.getField() + ": " + err.getDefaultMessage()).toList();
 
-        return buildResponse(HttpStatus.BAD_REQUEST, Constants.MSG_DADOS_INVALIDOS, errors);
+        return buildResponse(HttpStatus.BAD_REQUEST, MSG_DADOS_INVALIDOS, errors);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiErrorDTO> handleAccessDenied(AccessDeniedException ex) {
-        return buildResponse(HttpStatus.FORBIDDEN, Constants.MSG_PROIBIDO, null);
+        return buildResponse(HttpStatus.FORBIDDEN, MSG_PROIBIDO, null);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiErrorDTO> handleAuthenticationException(AuthenticationException ex) {
-        return buildResponse(HttpStatus.UNAUTHORIZED, Constants.MSG_NAO_AUTORIZADO, null);
+        return buildResponse(HttpStatus.UNAUTHORIZED, MSG_NAO_AUTORIZADO, null);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -55,11 +60,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorDTO> handleGenericException(Exception ex) {
         ex.printStackTrace();
-        // Usa mensagem genérica para erros 500
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, Constants.MSG_ERRO_GENERICO, List.of(ex.getMessage()));
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, MSG_ERRO_GENERICO, List.of(ex.getMessage()));
     }
 
-    // Método auxiliar para limpar o código
     private ResponseEntity<ApiErrorDTO> buildResponse(HttpStatus status, String msg, List<String> errors) {
         ApiErrorDTO error = new ApiErrorDTO(status.value(), msg, errors);
         return new ResponseEntity<>(error, status);

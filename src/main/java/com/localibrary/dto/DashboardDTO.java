@@ -9,6 +9,6 @@ public class DashboardDTO {
     private long totalBibliotecas;
     private long bibliotecasAtivas;
     private long bibliotecasPendentes;
-    private long totalLivrosCadastrados; // Total de livro
-    private long totalExemplares; // Soma das quantidades em acervos
+    private long totalLivrosCadastrados;
+    private long totalExemplares;
 }

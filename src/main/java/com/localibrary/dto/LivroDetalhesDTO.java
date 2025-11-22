@@ -3,6 +3,7 @@ package com.localibrary.dto;
 import com.localibrary.dto.response.LivroResponseDTO;
 import com.localibrary.entity.Livro;
 import lombok.Data;
+
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,7 +22,6 @@ public class LivroDetalhesDTO {
     private Set<String> generos;
     private List<LivroResponseDTO> livrosSimilares;
 
-    // Construtor principal
     public LivroDetalhesDTO(Livro livro) {
         this.id = livro.getId();
         this.titulo = livro.getTitulo();
@@ -32,14 +32,11 @@ public class LivroDetalhesDTO {
         this.capa = livro.getCapa();
         this.resumo = livro.getResumo();
         this.fotoAutor = livro.getFotoAutor();
-
-        // Mapeia os gêneros (como antes)
         this.generos = livro.getGeneros().stream()
                 .map(livroGenero -> livroGenero.getGenero().getNomeGenero())
                 .collect(Collectors.toSet());
     }
 
-    // Setter para os livros similares (será chamado pelo Service)
     public void setLivrosSimilares(List<Livro> similares) {
         this.livrosSimilares = similares.stream()
                 .map(LivroResponseDTO::new)

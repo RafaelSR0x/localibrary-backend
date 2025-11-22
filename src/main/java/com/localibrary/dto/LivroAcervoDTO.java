@@ -10,7 +10,7 @@ public class LivroAcervoDTO {
     private String autor;
     private String isbn;
     private String capa;
-    private int quantidade;
+    private Integer quantidade;
 
     public LivroAcervoDTO(BibliotecaLivro bl) {
         this.id = bl.getLivro().getId();

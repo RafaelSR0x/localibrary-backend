@@ -21,7 +21,7 @@ public class BibliotecaDetalhesDTO {
         this.razaoSocial = b.getRazaoSocial();
         this.cnpj = b.getCnpj();
         this.telefone = b.getTelefone();
-        this.categoria = b.getCategoria().name(); // Pega o nome do Enum
+        this.categoria = b.getCategoria().name();
         this.site = b.getSite();
         this.fotoBiblioteca = b.getFotoBiblioteca();
         if (b.getEndereco() != null) {
