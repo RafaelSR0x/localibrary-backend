@@ -32,7 +32,7 @@ A API estará disponível em `http://localhost:8080`
   CREATE DATABASE db_localibrary CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   
   # 2. Configurar variáveis de ambiente
-  export DB_HOST=localhost
+  export DB_HOST=mysql-db
   export DB_PORT=3306
   export DB_NAME=db_localibrary
   export DB_USER=root

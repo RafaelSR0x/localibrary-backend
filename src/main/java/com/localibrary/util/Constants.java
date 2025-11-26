@@ -44,7 +44,7 @@ public class Constants {
     public static final String MSG_CEP_INVALIDO = "CEP inválido (formato: 00000-000)";
     public static final String MSG_TELEFONE_INVALIDO = "Telefone inválido";
     public static final String MSG_ISBN_INVALIDO = "ISBN inválido (deve ter 13 dígitos)";
-    public static final String MSG_SENHA_INVALIDA = "Senha deve ter mínimo " + MIN_SENHA_LENGTH + ", incluindo maiúscula, minúscula, número e símbolo especial";
+    public static final String MSG_SENHA_INVALIDA = "Senha deve ter no mínimo " + MIN_SENHA_LENGTH + ", incluindo maiúscula, minúscula, número e símbolo especial";
     public static final String MSG_CAMPO_OBRIGATORIO = "Campo obrigatório";
 
     // ============================================
