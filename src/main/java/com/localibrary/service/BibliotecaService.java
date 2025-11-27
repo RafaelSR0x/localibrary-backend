@@ -5,14 +5,14 @@ import com.localibrary.dto.request.AddLivroRequestDTO;
 import com.localibrary.dto.response.BibliotecaResponseDTO;
 import com.localibrary.entity.*;
 import com.localibrary.enums.StatusBiblioteca;
+import com.localibrary.exception.DuplicateResourceException;
+import com.localibrary.exception.ResourceNotFoundException;
 import com.localibrary.repository.*;
+import com.localibrary.util.Constants;
 import com.localibrary.util.PaginationHelper;
 import com.localibrary.util.SecurityUtil;
 import com.localibrary.util.ValidationUtil;
-import jakarta.persistence.EntityExistsException;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,29 +24,29 @@ import static com.localibrary.util.Constants.*;
 @Service
 public class BibliotecaService {
 
-    @Autowired
-    private BibliotecaRepository bibliotecaRepository;
+    private final BibliotecaRepository bibliotecaRepository;
+    private final SecurityUtil securityUtil;
+    private final BibliotecaLivroRepository bibliotecaLivroRepository;
+    private final LivroRepository livroRepository;
+    private final GeneroRepository generoRepository;
+    private final LivroGeneroRepository livroGeneroRepository;
+    private final GeolocationService geolocationService;
 
-    @Autowired
-    private SecurityUtil securityUtil;
-
-    @Autowired
-    private BibliotecaLivroRepository bibliotecaLivroRepository;
-
-    @Autowired
-    private LivroRepository livroRepository;
-
-    @Autowired
-    private GeneroRepository generoRepository;
-
-    @Autowired
-    private LivroGeneroRepository livroGeneroRepository;
-
-    @Autowired
-    private GeolocationService geolocationService;
-
-    @Autowired
-    private EnderecoRepository enderecoRepository;
+    public BibliotecaService(BibliotecaRepository bibliotecaRepository,
+                             SecurityUtil securityUtil,
+                             BibliotecaLivroRepository bibliotecaLivroRepository,
+                             LivroRepository livroRepository,
+                             GeneroRepository generoRepository,
+                             LivroGeneroRepository livroGeneroRepository,
+                             GeolocationService geolocationService) {
+        this.bibliotecaRepository = bibliotecaRepository;
+        this.securityUtil = securityUtil;
+        this.bibliotecaLivroRepository = bibliotecaLivroRepository;
+        this.livroRepository = livroRepository;
+        this.generoRepository = generoRepository;
+        this.livroGeneroRepository = livroGeneroRepository;
+        this.geolocationService = geolocationService;
+    }
 
     /**
      * ✅ CORREÇÃO RF-04: Listar bibliotecas ATIVAS com PAGINAÇÃO
@@ -63,10 +63,10 @@ public class BibliotecaService {
      */
     public BibliotecaDetalhesDTO buscarDetalhesBiblioteca(Long id) {
         Biblioteca biblioteca = bibliotecaRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Biblioteca não encontrada com id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Biblioteca não encontrada com id: " + id));
 
         if (biblioteca.getStatus() != StatusBiblioteca.ATIVO) {
-            throw new EntityNotFoundException("Biblioteca não disponível");
+            throw new ResourceNotFoundException("Biblioteca não disponível");
         }
 
         return new BibliotecaDetalhesDTO(biblioteca);
@@ -118,10 +118,10 @@ public class BibliotecaService {
         // Chama Geolocation API
         Coordinates coords = geolocationService.getCoordinatesFromAddress(
                         dto.getCep(), dto.getLogradouro(), dto.getNumero(), dto.getCidade())
-                .orElseThrow(() -> new IllegalArgumentException("Endereço inválido ou não encontrado."));
+                .orElseThrow(() -> new IllegalArgumentException(MSG_ENDERECO_INVALIDO));
 
         if (!ValidationUtil.isValidCoordinates(coords.latitude().doubleValue(), coords.longitude().doubleValue())) {
-            throw new IllegalArgumentException("Coordenadas inválidas.");
+            throw new IllegalArgumentException(MSG_COORDENADAS_INVALIDAS);
         }
 
         endereco.setLatitude(coords.latitude());
@@ -153,7 +153,7 @@ public class BibliotecaService {
         Biblioteca biblioteca = findBibliotecaById(idBiblioteca);
 
         if (dto.getAnoPublicacao() != null && !ValidationUtil.isValidAnoPublicacao(dto.getAnoPublicacao())) {
-            throw new IllegalArgumentException("Ano de publicação inválido ou no futuro.");
+            throw new IllegalArgumentException(MSG_ANO_PUBLICACAO_INVALIDO);
         }
 
         Livro livro = livroRepository.findByIsbn(dto.getIsbn())
@@ -166,7 +166,7 @@ public class BibliotecaService {
         Livro savedlivro = livroRepository.save(livro);
 
         if (bibliotecaLivroRepository.existsByBibliotecaIdAndLivroId(idBiblioteca, savedlivro.getId())) {
-            throw new EntityExistsException("Este livro já existe no seu acervo. Use o 'Atualizar Quantidade'.");
+            throw new DuplicateResourceException(MSG_DUPLICADO_ISBN);
         }
 
         BibliotecaLivro newRelacao = new BibliotecaLivro();
@@ -187,7 +187,7 @@ public class BibliotecaService {
         securityUtil.checkHasPermission(idBiblioteca);
 
         if (!bibliotecaLivroRepository.existsByBibliotecaIdAndLivroId(idBiblioteca, idLivro)) {
-            throw new EntityNotFoundException("Livro não encontrado no acervo desta biblioteca.");
+            throw new ResourceNotFoundException(MSG_LIVRO_NAO_ENCONTRADO_ACERVO);
         }
 
         bibliotecaLivroRepository.deleteByBibliotecaIdAndLivroId(idBiblioteca, idLivro);
@@ -201,7 +201,11 @@ public class BibliotecaService {
         securityUtil.checkHasPermission(idBiblioteca);
 
         BibliotecaLivro relacao = bibliotecaLivroRepository.findByBibliotecaIdAndLivroId(idBiblioteca, idLivro)
-                .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado no acervo."));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_LIVRO_NAO_ENCONTRADO));
+
+        if (dto.getQuantidade() == null || dto.getQuantidade() < Constants.QUANTIDADE_MINIMA_LIVRO) {
+            throw new IllegalArgumentException(String.format(Constants.MSG_QUANTIDADE_MINIMA, Constants.QUANTIDADE_MINIMA_LIVRO));
+        }
 
         if (dto.getQuantidade() == 0) {
             bibliotecaLivroRepository.delete(relacao);
@@ -213,11 +217,64 @@ public class BibliotecaService {
         return new LivroAcervoDTO(savedRelacao);
     }
 
+    /**
+     * RF-12: Retorna todas as informações do livro para edição (apenas para bibliotecas que têm o livro no acervo)
+     */
+    public LivroDetalhesDTO getLivroForEdit(Long idBiblioteca, Long idLivro) {
+        securityUtil.checkHasPermission(idBiblioteca);
+
+        // Verifica se o livro pertence ao acervo da biblioteca
+        if (!bibliotecaLivroRepository.existsByBibliotecaIdAndLivroId(idBiblioteca, idLivro)) {
+            throw new ResourceNotFoundException(MSG_LIVRO_NAO_ENCONTRADO_ACERVO);
+        }
+
+        Livro livro = livroRepository.findByIdWithGeneros(idLivro)
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_LIVRO_NAO_ENCONTRADO));
+
+        return new LivroDetalhesDTO(livro);
+    }
+
+    /**
+     * RF-13: Atualiza informações do livro (campos editáveis) e salva no banco
+     */
+    @Transactional
+    public LivroDetalhesDTO updateLivroInLibrary(Long idBiblioteca, Long idLivro, com.localibrary.dto.request.UpdateLivroRequestDTO dto) {
+        securityUtil.checkHasPermission(idBiblioteca);
+
+        // Verifica se o livro pertence ao acervo da biblioteca
+        if (!bibliotecaLivroRepository.existsByBibliotecaIdAndLivroId(idBiblioteca, idLivro)) {
+            throw new ResourceNotFoundException(MSG_LIVRO_NAO_ENCONTRADO_ACERVO);
+        }
+
+        Livro livro = livroRepository.findByIdWithGeneros(idLivro)
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_LIVRO_NAO_ENCONTRADO));
+
+        // Validações mínimas
+        if (dto.getAnoPublicacao() != null && !ValidationUtil.isValidAnoPublicacao(dto.getAnoPublicacao())) {
+            throw new IllegalArgumentException(MSG_ANO_PUBLICACAO_INVALIDO);
+        }
+
+        // Atualiza campos editáveis
+        livro.setTitulo(dto.getTitulo());
+        livro.setAutor(dto.getAutor());
+        livro.setEditora(dto.getEditora());
+        livro.setAnoPublicacao(dto.getAnoPublicacao());
+        livro.setCapa(dto.getCapa());
+        livro.setResumo(dto.getResumo());
+
+        // Atualiza gêneros
+        setGenerosForLivro(livro, dto.getGenerosIds());
+
+        Livro saved = livroRepository.save(livro);
+
+        return new LivroDetalhesDTO(saved);
+    }
+
     // --- Métodos Auxiliares ---
 
     private Biblioteca findBibliotecaById(Long id) {
         return bibliotecaRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Biblioteca não encontrada com id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Biblioteca não encontrada com id: " + id));
     }
 
     private Livro createNewlivro(AddLivroRequestDTO dto) {
@@ -242,7 +299,7 @@ public class BibliotecaService {
 
         for (Long generoId : generosIds) {
             Genero genero = generoRepository.findById(generoId)
-                    .orElseThrow(() -> new EntityNotFoundException("Gênero com ID " + generoId + " não encontrado."));
+                    .orElseThrow(() -> new ResourceNotFoundException(MSG_GENERO_NAO_ENCONTRADO + " ID: " + generoId));
 
             LivroGenero lgRelacao = new LivroGenero();
             lgRelacao.setLivro(livro);

@@ -1,6 +1,7 @@
 package com.localibrary.service;
 
 import com.localibrary.enums.TipoUpload;
+import com.localibrary.exception.StorageException;
 import com.localibrary.util.Constants;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,32 +34,57 @@ public class FileStorageService {
                 Files.createDirectories(rootLocation.resolve(tipo.getDiretorio()));
             }
         } catch (IOException ex) {
-            throw new RuntimeException("Não foi possível criar os diretórios de upload.", ex);
+            throw new StorageException("Não foi possível criar os diretórios de upload.", ex);
         }
     }
 
     public String storeFile(MultipartFile file, TipoUpload tipo) {
+        // Protege contra filename nulo
+        String originalFilenameRaw = file.getOriginalFilename();
+        if (originalFilenameRaw == null || originalFilenameRaw.isBlank()) {
+            throw new StorageException(Constants.MSG_NOME_ARQUIVO_AUSENTE);
+        }
+
+        // Verifica tamanho máximo
+        if (file.getSize() > Constants.MAX_FILE_SIZE) {
+            throw new StorageException("Arquivo maior que o tamanho máximo permitido: " + Constants.MAX_FILE_SIZE + " bytes");
+        }
+
+        // Verifica tipo permitido (quando disponível)
+        String contentType = file.getContentType();
+        if (contentType != null) {
+            boolean allowed = false;
+            for (String allowedType : Constants.ALLOWED_IMAGE_TYPES) {
+                if (allowedType.equalsIgnoreCase(contentType)) {
+                    allowed = true;
+                    break;
+                }
+            }
+            if (!allowed) {
+                throw new StorageException("Tipo de arquivo não suportado: " + contentType);
+            }
+        }
+
         // Normaliza o nome do arquivo
-        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+        String originalFilename = StringUtils.cleanPath(originalFilenameRaw);
 
         // Validação de segurança básica
         if (originalFilename.contains("..")) {
-            throw new RuntimeException("Nome de arquivo inválido: " + originalFilename);
+            throw new StorageException("Nome de arquivo inválido: " + originalFilename);
         }
 
-        // Gera nome único: uuid.jpg
+        // Gera nome único: uuid.jpg (usando concatenação implícita para evitar warning desnecessário)
         String extension = "";
         int i = originalFilename.lastIndexOf('.');
         if (i > 0) {
             extension = originalFilename.substring(i);
         }
-        String fileName = UUID.randomUUID().toString() + extension;
+        String fileName = UUID.randomUUID() + extension;
 
         // Define o caminho final: uploads/capas/uuid.jpg
         Path targetLocation = this.rootLocation.resolve(tipo.getDiretorio()).resolve(fileName);
 
         try {
-            // --- A MÁGICA DO REDIMENSIONAMENTO ---
             // Redimensiona e salva
             Thumbnails.of(file.getInputStream())
                     .size(tipo.getLargura(), tipo.getAltura())
@@ -69,7 +95,7 @@ public class FileStorageService {
             return tipo.getDiretorio() + "/" + fileName;
 
         } catch (IOException ex) {
-            throw new RuntimeException("Falha ao armazenar arquivo " + fileName, ex);
+            throw new StorageException("Falha ao armazenar arquivo " + fileName, ex);
         }
     }
 }

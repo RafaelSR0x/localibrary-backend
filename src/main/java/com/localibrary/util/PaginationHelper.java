@@ -14,10 +14,10 @@ public abstract class PaginationHelper {
     /**
      * Cria um objeto Pageable com valores padrão se os parâmetros forem nulos/inválidos
      *
-     * @param page Número da página (0-based)
-     * @param size Tamanho da página
+     * @param page      Número da página (0-based)
+     * @param size      Tamanho da página
      * @param sortField Campo para ordenação
-     * @param sortDir Direção da ordenação (ASC ou DESC)
+     * @param sortDir   Direção da ordenação (ASC ou DESC)
      * @return Pageable configurado
      */
     public static Pageable createPageable(Integer page, Integer size, String sortField, String sortDir) {

@@ -18,7 +18,7 @@ public class SecurityUtil {
             throw new SecurityException("Usuário não autenticado.");
         }
 
-        // Na Sprint 1 (JwtAuthenticationFilter), definimos o ID como o "Principal"
+        // Definimos o ID como o "Principal"
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof Long) {

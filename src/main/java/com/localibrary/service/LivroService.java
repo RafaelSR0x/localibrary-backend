@@ -5,15 +5,14 @@ import com.localibrary.dto.request.AddLivroRequestDTO;
 import com.localibrary.dto.response.LivroResponseDTO;
 import com.localibrary.entity.*;
 import com.localibrary.enums.StatusBiblioteca;
+import com.localibrary.exception.DuplicateResourceException;
+import com.localibrary.exception.ResourceNotFoundException;
 import com.localibrary.repository.*;
 import com.localibrary.util.Constants;
 import com.localibrary.util.DistanceCalculator;
 import com.localibrary.util.PaginationHelper;
 import com.localibrary.util.SecurityUtil;
 import com.localibrary.util.ValidationUtil;
-import jakarta.persistence.EntityExistsException;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,28 +22,30 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class LivroService {
 
-    @Autowired
-    private LivroRepository livroRepository;
+    private final LivroRepository livroRepository;
+    private final BibliotecaRepository bibliotecaRepository;
+    private final BibliotecaLivroRepository bibliotecaLivroRepository;
+    private final GeneroRepository generoRepository;
+    private final LivroGeneroRepository livroGeneroRepository;
+    private final SecurityUtil securityUtil;
 
-    @Autowired
-    private BibliotecaRepository bibliotecaRepository;
-
-    @Autowired
-    private BibliotecaLivroRepository bibliotecaLivroRepository;
-
-    @Autowired
-    private GeneroRepository generoRepository;
-
-    @Autowired
-    private LivroGeneroRepository livroGeneroRepository;
-
-    @Autowired
-    private SecurityUtil securityUtil;
+    public LivroService(LivroRepository livroRepository,
+                        BibliotecaRepository bibliotecaRepository,
+                        BibliotecaLivroRepository bibliotecaLivroRepository,
+                        GeneroRepository generoRepository,
+                        LivroGeneroRepository livroGeneroRepository,
+                        SecurityUtil securityUtil) {
+        this.livroRepository = livroRepository;
+        this.bibliotecaRepository = bibliotecaRepository;
+        this.bibliotecaLivroRepository = bibliotecaLivroRepository;
+        this.generoRepository = generoRepository;
+        this.livroGeneroRepository = livroGeneroRepository;
+        this.securityUtil = securityUtil;
+    }
 
     // ================================================================================
     // 🟢 MÉTODOS PÚBLICOS (BUSCA E VISUALIZAÇÃO)
@@ -70,7 +71,7 @@ public class LivroService {
 
         return livroRepository.findLivrosPopulares(limit).stream()
                 .map(LivroResponseDTO::new)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -80,7 +81,7 @@ public class LivroService {
     public LivroDetalhesDTO buscarDetalhesDoLivro(Long id) {
         // Busca o livro COM os gêneros em uma única query
         Livro livro = livroRepository.findByIdWithGeneros(id)
-                .orElseThrow(() -> new EntityNotFoundException(Constants.MSG_NAO_ENCONTRADO));
+                .orElseThrow(() -> new ResourceNotFoundException(Constants.MSG_NAO_ENCONTRADO));
 
         LivroDetalhesDTO detalhesDTO = new LivroDetalhesDTO(livro);
 
@@ -103,7 +104,7 @@ public class LivroService {
         List<BibliotecaParaLivroDTO> dtos = bibliotecas.stream()
                 .filter(b -> b.getStatus() == StatusBiblioteca.ATIVO)
                 .map(BibliotecaParaLivroDTO::new)
-                .collect(Collectors.toList());
+                .toList();
 
         // Ordenação por proximidade
         if (ValidationUtil.isValidCoordinates(userLat, userLon)) {
@@ -131,38 +132,37 @@ public class LivroService {
         securityUtil.checkHasPermission(idBiblioteca);
 
         Biblioteca biblioteca = bibliotecaRepository.findById(idBiblioteca)
-                .orElseThrow(() -> new EntityNotFoundException(Constants.MSG_NAO_ENCONTRADO));
+                .orElseThrow(() -> new ResourceNotFoundException(Constants.MSG_NAO_ENCONTRADO));
 
-        // Validações
         if (!ValidationUtil.isValidISBN(dto.getIsbn())) {
             throw new IllegalArgumentException(Constants.MSG_ISBN_INVALIDO);
         }
 
         if (dto.getAnoPublicacao() != null && !ValidationUtil.isValidAnoPublicacao(dto.getAnoPublicacao())) {
-            throw new IllegalArgumentException("Ano de publicação inválido.");
+            throw new IllegalArgumentException(Constants.MSG_ANO_PUBLICACAO_INVALIDO);
         }
 
-        // Encontra ou cria livro
         Livro livro = livroRepository.findByIsbn(dto.getIsbn())
                 .orElseGet(() -> createNewlivro(dto));
 
-        // Associa gêneros
         if (livro.getId() == null || livro.getGeneros().isEmpty()) {
             setGenerosForLivro(livro, dto.getGenerosIds());
         }
 
         Livro savedlivro = livroRepository.save(livro);
 
-        // Verifica duplicação
         if (bibliotecaLivroRepository.existsByBibliotecaIdAndLivroId(idBiblioteca, savedlivro.getId())) {
-            throw new EntityExistsException("Este livro já existe no seu acervo. Use a atualização de quantidade.");
+            throw new DuplicateResourceException(Constants.MSG_DUPLICADO_ISBN);
         }
 
-        // Cria relação
         BibliotecaLivro newRelacao = new BibliotecaLivro();
         newRelacao.setBiblioteca(biblioteca);
         newRelacao.setLivro(savedlivro);
         newRelacao.setQuantidade(dto.getQuantidade());
+
+        if (dto.getQuantidade() == null || dto.getQuantidade() < Constants.QUANTIDADE_MINIMA_LIVRO) {
+            throw new IllegalArgumentException(String.format(Constants.MSG_QUANTIDADE_MINIMA, Constants.QUANTIDADE_MINIMA_LIVRO));
+        }
 
         BibliotecaLivro savedRelacao = bibliotecaLivroRepository.save(newRelacao);
 
@@ -177,7 +177,7 @@ public class LivroService {
         securityUtil.checkHasPermission(idBiblioteca);
 
         if (!bibliotecaLivroRepository.existsByBibliotecaIdAndLivroId(idBiblioteca, idLivro)) {
-            throw new EntityNotFoundException(Constants.MSG_NAO_ENCONTRADO);
+            throw new ResourceNotFoundException(Constants.MSG_NAO_ENCONTRADO);
         }
 
         bibliotecaLivroRepository.deleteByBibliotecaIdAndLivroId(idBiblioteca, idLivro);
@@ -191,7 +191,7 @@ public class LivroService {
         securityUtil.checkHasPermission(idBiblioteca);
 
         BibliotecaLivro relacao = bibliotecaLivroRepository.findByBibliotecaIdAndLivroId(idBiblioteca, idLivro)
-                .orElseThrow(() -> new EntityNotFoundException(Constants.MSG_NAO_ENCONTRADO));
+                .orElseThrow(() -> new ResourceNotFoundException(Constants.MSG_NAO_ENCONTRADO));
 
         if (dto.getQuantidade() == 0) {
             bibliotecaLivroRepository.delete(relacao);
@@ -231,7 +231,7 @@ public class LivroService {
 
         for (Long generoId : generosIds) {
             Genero genero = generoRepository.findById(generoId)
-                    .orElseThrow(() -> new EntityNotFoundException("Gênero ID " + generoId + " não encontrado"));
+                    .orElseThrow(() -> new ResourceNotFoundException(Constants.MSG_GENERO_NAO_ENCONTRADO + " ID: " + generoId));
 
             LivroGenero lg = new LivroGenero();
             lg.setLivro(livro);

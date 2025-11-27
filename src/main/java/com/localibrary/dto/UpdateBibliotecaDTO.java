@@ -8,7 +8,6 @@ import lombok.Data;
 @Data
 public class UpdateBibliotecaDTO {
 
-    // Dados da Biblioteca (tbl_biblioteca)
     @NotBlank
     private String nomeFantasia;
     @NotBlank
@@ -19,7 +18,6 @@ public class UpdateBibliotecaDTO {
     private String site;
     private String fotoBiblioteca;
 
-    // Dados do Endereço (tbl_endereco) - (RN-14: Revalidar endereço)
     @NotBlank
     private String cep;
     @NotBlank

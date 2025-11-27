@@ -17,12 +17,13 @@ public class Constants {
     // CONSTANTES DE STATUS HTTP
     // ============================================
     public static final String MSG_SUCESSO = "Operação realizada com sucesso";
-    public static final String MSG_ERRO_GENERICO = "Ocorreu um erro ao processar a solicitação";
+    public static final String MSG_ERRO_GENERICO = "Ocorreu um erro interno ao processar a solicitação. Entre em contato com o suporte.";
     public static final String MSG_NAO_ENCONTRADO = "Recurso não encontrado";
-    public static final String MSG_NAO_AUTORIZADO = "Acesso não autorizado";
-    public static final String MSG_PROIBIDO = "Acesso proibido";
-    public static final String MSG_CONFLITO = "Conflito de dados";
-    public static final String MSG_DADOS_INVALIDOS = "Dados inválidos";
+    public static final String MSG_NAO_AUTORIZADO = "Credenciais inválidas ou token expirado";
+    public static final String MSG_PROIBIDO = "Acesso negado. Você não tem permissão para acessar este recurso.";
+    public static final String MSG_CONFLITO = "Recurso já existe no sistema";
+    public static final String MSG_DADOS_INVALIDOS = "Dados inválidos ou incompletos";
+    public static final String MSG_SERVICO_INDISPONIVEL = "Serviço temporariamente indisponível. Tente novamente em alguns instantes.";
 
     // ============================================
     // CONSTANTES DE VALIDAÇÃO
@@ -44,8 +45,23 @@ public class Constants {
     public static final String MSG_CEP_INVALIDO = "CEP inválido (formato: 00000-000)";
     public static final String MSG_TELEFONE_INVALIDO = "Telefone inválido";
     public static final String MSG_ISBN_INVALIDO = "ISBN inválido (deve ter 13 dígitos)";
-    public static final String MSG_SENHA_INVALIDA = "Senha deve ter no mínimo " + MIN_SENHA_LENGTH + ", incluindo maiúscula, minúscula, número e símbolo especial";
+    public static final String MSG_SENHA_INVALIDA = "Senha deve ter no mínimo " + MIN_SENHA_LENGTH + " e no máximo " + MAX_SENHA_LENGTH + ", incluindo maiúscula, minúscula, número e símbolo especial";
     public static final String MSG_CAMPO_OBRIGATORIO = "Campo obrigatório";
+
+    // Mensagens adicionais padronizadas
+    public static final String MSG_ENDERECO_INVALIDO = "Endereço inválido ou não encontrado.";
+    public static final String MSG_COORDENADAS_INVALIDAS = "Coordenadas inválidas.";
+    public static final String MSG_ANO_PUBLICACAO_INVALIDO = "Ano de publicação inválido ou no futuro.";
+    public static final String MSG_DUPLICADO_EMAIL = "Este email já está em uso.";
+    public static final String MSG_DUPLICADO_CNPJ = "Este CNPJ já está em uso.";
+    public static final String MSG_DUPLICADO_ISBN = "Este livro já existe no seu acervo. Use a atualização de quantidade.";
+    public static final String MSG_NOME_ARQUIVO_AUSENTE = "Nome de arquivo inválido ou ausente";
+    public static final String MSG_LIVRO_NAO_ENCONTRADO = "Livro não encontrado";
+    public static final String MSG_LIVRO_NAO_ENCONTRADO_ACERVO = "Livro não encontrado no acervo desta biblioteca.";
+    public static final String MSG_GENERO_NAO_ENCONTRADO = "Gênero não encontrado";
+    public static final String MSG_MODERADOR_NAO_ENCONTRADO = "Moderador não encontrado";
+    public static final String MSG_USUARIO_NAO_ENCONTRADO = "Usuário não encontrado";
+    public static final String MSG_QUANTIDADE_MINIMA = "Quantidade mínima permitida é %d";
 
     // ============================================
     // CONSTANTES DE NEGÓCIO
@@ -55,7 +71,7 @@ public class Constants {
     public static final int QUANTIDADE_MINIMA_LIVRO = 1;
 
     // ============================================
-    // CONSTANTES DE JWT (serão usadas na Sprint 2)
+    // CONSTANTES DE JWT
     // ============================================
     public static final String JWT_HEADER = "Authorization";
     public static final String JWT_PREFIX = "Bearer ";
@@ -81,8 +97,8 @@ public class Constants {
     // ============================================
     // CONSTANTES DE PAGINAÇÃO
     // ============================================
-    public static final int DEFAULT_PAGE_SIZE = 20;
-    public static final int MAX_PAGE_SIZE = 100;
+    public static final int DEFAULT_PAGE_SIZE = 10;
+    public static final int MAX_PAGE_SIZE = 50;
     public static final String DEFAULT_SORT_FIELD = "id";
     public static final String DEFAULT_SORT_DIRECTION = "ASC";
 

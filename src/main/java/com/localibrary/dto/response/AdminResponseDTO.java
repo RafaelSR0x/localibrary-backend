@@ -14,7 +14,6 @@ public class AdminResponseDTO {
     private RoleAdmin roleAdmin;
     private StatusAdmin status;
 
-    // Construtor que converte Entidade para DTO
     public AdminResponseDTO(Admin admin) {
         this.id = admin.getId();
         this.nome = admin.getNome();

@@ -26,7 +26,6 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // ✅ CORREÇÃO CRÍTICA: CORS agora usa variável de ambiente
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
 
@@ -49,7 +48,6 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // ✅ CORREÇÃO CRÍTICA: Agora usa origens específicas da variável de ambiente
         config.setAllowCredentials(true);
 
         // Divide as origens por vírgula e adiciona cada uma
@@ -71,10 +69,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(org.springframework.security.config.Customizer.withDefaults())
 
-                // Sessão Stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // Filtro JWT
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .authorizeHttpRequests(authorize -> authorize

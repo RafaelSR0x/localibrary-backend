@@ -12,39 +12,42 @@ import com.localibrary.entity.Biblioteca;
 import com.localibrary.enums.RoleAdmin;
 import com.localibrary.enums.StatusAdmin;
 import com.localibrary.enums.StatusBiblioteca;
+import com.localibrary.exception.DuplicateResourceException;
+import com.localibrary.exception.ResourceNotFoundException;
 import com.localibrary.repository.AdminRepository;
 import com.localibrary.repository.BibliotecaLivroRepository;
 import com.localibrary.repository.BibliotecaRepository;
 import com.localibrary.repository.LivroRepository;
 import com.localibrary.util.PaginationHelper;
-import jakarta.persistence.EntityExistsException;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import static com.localibrary.util.Constants.*;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class AdminService {
 
-    @Autowired
-    private AdminRepository adminRepository;
+    private final AdminRepository adminRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final BibliotecaRepository bibliotecaRepository;
+    private final LivroRepository livroRepository;
+    private final BibliotecaLivroRepository bibliotecaLivroRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private BibliotecaRepository bibliotecaRepository;
-
-    @Autowired
-    private LivroRepository livroRepository;
-
-    @Autowired
-    private BibliotecaLivroRepository bibliotecaLivroRepository;
+    public AdminService(AdminRepository adminRepository,
+                        org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+                        BibliotecaRepository bibliotecaRepository,
+                        LivroRepository livroRepository,
+                        BibliotecaLivroRepository bibliotecaLivroRepository) {
+        this.adminRepository = adminRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.bibliotecaRepository = bibliotecaRepository;
+        this.livroRepository = livroRepository;
+        this.bibliotecaLivroRepository = bibliotecaLivroRepository;
+    }
 
     /**
      * ✅ CORREÇÃO RF-16: Dashboard agora inclui mapa de localização
@@ -59,7 +62,7 @@ public class AdminService {
         // ✅ NOVO: Busca bibliotecas para o mapa
         List<BibliotecaMapaDTO> bibliotecasMapa = bibliotecaRepository.findAll().stream()
                 .map(BibliotecaMapaDTO::new)
-                .collect(Collectors.toList());
+                .toList();
 
         return DashboardDTO.builder()
                 .totalBibliotecas(totalLibs)
@@ -67,7 +70,7 @@ public class AdminService {
                 .bibliotecasPendentes(pendingLibs)
                 .totalLivrosCadastrados(totalBooks)
                 .totalExemplares(totalCopies != null ? totalCopies : 0)
-                .bibliotecasMapa(bibliotecasMapa) // ✅ Inclui mapa
+                .bibliotecasMapa(bibliotecasMapa)
                 .build();
     }
 
@@ -93,7 +96,7 @@ public class AdminService {
      */
     public BibliotecaAdminDTO updateBibliotecaStatus(Long id, UpdateStatusBibliotecaDTO dto) {
         Biblioteca lib = bibliotecaRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Biblioteca não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_NAO_ENCONTRADO));
 
         lib.setStatus(dto.getStatus());
         Biblioteca saved = bibliotecaRepository.save(lib);
@@ -106,7 +109,7 @@ public class AdminService {
      */
     public void deleteBiblioteca(Long id) {
         if (!bibliotecaRepository.existsById(id)) {
-            throw new EntityNotFoundException("Biblioteca não encontrada.");
+            throw new ResourceNotFoundException(MSG_NAO_ENCONTRADO);
         }
         bibliotecaRepository.deleteById(id);
     }
@@ -116,7 +119,7 @@ public class AdminService {
      */
     public AdminResponseDTO createModerator(CreateModeratorRequestDTO dto) {
         if (adminRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new EntityExistsException("Email já cadastrado.");
+            throw new DuplicateResourceException(MSG_DUPLICADO_EMAIL);
         }
 
         Admin newModerator = new Admin();
@@ -138,7 +141,7 @@ public class AdminService {
         return adminRepository.findAll().stream()
                 .filter(admin -> admin.getRoleAdmin() == RoleAdmin.MODERADOR)
                 .map(AdminResponseDTO::new)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -160,10 +163,9 @@ public class AdminService {
         adminRepository.delete(moderator);
     }
 
-    // Método auxiliar
     private Admin findModeratorById(Long id) {
         return adminRepository.findById(id)
                 .filter(admin -> admin.getRoleAdmin() == RoleAdmin.MODERADOR)
-                .orElseThrow(() -> new EntityNotFoundException("Moderador não encontrado com id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_MODERADOR_NAO_ENCONTRADO + " com id: " + id));
     }
 }

@@ -102,7 +102,7 @@ public class BibliotecaController {
     }
 
     @Operation(summary = "Atualizar Estoque", description = "Altera a quantidade de exemplares de um livro.", security = @SecurityRequirement(name = "bearerAuth"))
-    @PatchMapping("/{id_biblioteca}/livros/{id_livro}")
+    @PatchMapping("/{id_biblioteca}/livros/{id_livro}/quantidade")
     public ResponseEntity<LivroAcervoDTO> updateQuantidade(
             @PathVariable Long id_biblioteca,
             @PathVariable Long id_livro,
@@ -111,5 +111,26 @@ public class BibliotecaController {
         LivroAcervoDTO updatedLivro = bibliotecaService.updateQuantidadeLivro(id_biblioteca, id_livro, dto);
         if (updatedLivro == null) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(updatedLivro);
+    }
+
+    @Operation(summary = "Obter Livro para Edição", description = "Retorna todas as informações do livro para edição. Requer token da própria biblioteca.", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("/{id_biblioteca}/livros/{id_livro}")
+    public ResponseEntity<com.localibrary.dto.LivroDetalhesDTO> getLivroForEdit(
+            @PathVariable Long id_biblioteca,
+            @PathVariable Long id_livro
+    ) {
+        com.localibrary.dto.LivroDetalhesDTO dto = bibliotecaService.getLivroForEdit(id_biblioteca, id_livro);
+        return ResponseEntity.ok(dto);
+    }
+
+    @Operation(summary = "Atualizar Livro", description = "Atualiza as informações do livro no acervo. Requer token da própria biblioteca.", security = @SecurityRequirement(name = "bearerAuth"))
+    @PatchMapping("/{id_biblioteca}/livros/{id_livro}")
+    public ResponseEntity<com.localibrary.dto.LivroDetalhesDTO> updateLivro(
+            @PathVariable Long id_biblioteca,
+            @PathVariable Long id_livro,
+            @Valid @RequestBody com.localibrary.dto.request.UpdateLivroRequestDTO dto
+    ) {
+        com.localibrary.dto.LivroDetalhesDTO updated = bibliotecaService.updateLivroInLibrary(id_biblioteca, id_livro, dto);
+        return ResponseEntity.ok(updated);
     }
 }

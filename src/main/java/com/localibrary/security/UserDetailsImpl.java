@@ -18,7 +18,6 @@ public class UserDetailsImpl implements UserDetails {
     private final String senha;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    // Construtor para Admin
     public UserDetailsImpl(Admin admin) {
         this.id = admin.getId();
         this.email = admin.getEmail();
@@ -27,7 +26,6 @@ public class UserDetailsImpl implements UserDetails {
         this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + admin.getRoleAdmin().name()));
     }
 
-    // Construtor para Biblioteca
     public UserDetailsImpl(CredencialBiblioteca credenciais) {
         // IMPORTANTE: O ID que guardamos é o da BIBLIOTECA, não o da credencial
         this.id = credenciais.getBiblioteca().getId();
@@ -51,13 +49,23 @@ public class UserDetailsImpl implements UserDetails {
         return email;
     }
 
-    // Métodos de conta (pode implementar lógica de status PENDENTE/INATIVO aqui)
     @Override
-    public boolean isAccountNonExpired() { return true; }
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
     @Override
-    public boolean isAccountNonLocked() { return true; }
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
     @Override
-    public boolean isCredentialsNonExpired() { return true; }
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
     @Override
-    public boolean isEnabled() { return true; } // RN-02 e RN-06 serão tratados no service
+    public boolean isEnabled() {
+        return true;
+    }
 }

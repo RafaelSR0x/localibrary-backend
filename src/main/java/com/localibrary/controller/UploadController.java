@@ -18,7 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/uploads")
 @Tag(name = "5. Uploads", description = "Serviço de armazenamento de imagens")
-@SecurityRequirement(name = "bearerAuth") // Requer autenticação
+@SecurityRequirement(name = "bearerAuth")
 public class UploadController {
 
     private final FileStorageService fileStorageService;

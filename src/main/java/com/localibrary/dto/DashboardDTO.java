@@ -12,7 +12,6 @@ import java.util.List;
 @Builder
 public class DashboardDTO {
 
-    // Estatísticas gerais
     private long totalBibliotecas;
     private long bibliotecasAtivas;
     private long bibliotecasPendentes;

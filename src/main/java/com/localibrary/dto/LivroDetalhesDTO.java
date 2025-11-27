@@ -40,6 +40,6 @@ public class LivroDetalhesDTO {
     public void setLivrosSimilares(List<Livro> similares) {
         this.livrosSimilares = similares.stream()
                 .map(LivroResponseDTO::new)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

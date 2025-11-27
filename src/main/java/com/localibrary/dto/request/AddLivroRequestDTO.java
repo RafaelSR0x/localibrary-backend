@@ -27,11 +27,9 @@ public class AddLivroRequestDTO {
 
     private String resumo;
 
-    // Parte 2: Gêneros (tbl_livro_genero)
     @NotEmpty
     private Set<Long> generosIds;
 
-    // Parte 3: Inventário (tbl_biblioteca_livro)
     @NotNull
     @Min(1)
     private Integer quantidade;

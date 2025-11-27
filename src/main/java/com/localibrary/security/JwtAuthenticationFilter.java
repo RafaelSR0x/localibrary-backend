@@ -5,7 +5,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,8 +22,11 @@ import static com.localibrary.util.Constants.*;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtTokenService jwtTokenService;
+    private final JwtTokenService jwtTokenService;
+
+    public JwtAuthenticationFilter(JwtTokenService jwtTokenService) {
+        this.jwtTokenService = jwtTokenService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,8 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(jwt) && jwtTokenService.validateToken(jwt)) {
                 Claims claims = jwtTokenService.extractAllClaims(jwt);
 
-                String email = claims.getSubject();
-                Long id = ((Number) claims.get(JWT_CLAIM_ID)).longValue(); // Usa constante "id"
+                Long id = ((Number) claims.get(JWT_CLAIM_ID)).longValue();
                 String rolesString = (String) claims.get(JWT_CLAIM_ROLE);
 
                 if (rolesString != null) {

@@ -9,7 +9,6 @@ import static com.localibrary.util.Constants.*;
 @Data
 public class BibliotecaRegistrationDTO {
 
-    // Dados da Biblioteca (tbl_biblioteca)
     @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     private String nomeFantasia;
 
@@ -39,7 +38,6 @@ public class BibliotecaRegistrationDTO {
     @Size(min = MIN_SENHA_LENGTH, max = MAX_SENHA_LENGTH, message = MSG_SENHA_INVALIDA)
     private String senha;
 
-    // Dados do Endereço (tbl_endereco)
     @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     private String cep;
 

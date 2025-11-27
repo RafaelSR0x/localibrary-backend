@@ -7,13 +7,13 @@ import com.localibrary.entity.Biblioteca;
 import com.localibrary.entity.CredencialBiblioteca;
 import com.localibrary.entity.Endereco;
 import com.localibrary.enums.StatusBiblioteca;
+import com.localibrary.exception.DuplicateResourceException;
 import com.localibrary.repository.BibliotecaRepository;
 import com.localibrary.repository.CredencialBibliotecaRepository;
 import com.localibrary.repository.EnderecoRepository;
 import com.localibrary.security.JwtTokenService;
-import com.localibrary.util.Constants; // Import Constants
-import com.localibrary.util.ValidationUtil; // ⬅️ Import ValidationUtil
-import jakarta.persistence.EntityExistsException;
+import com.localibrary.util.Constants;
+import com.localibrary.util.ValidationUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -79,29 +79,24 @@ public class AuthenticationService {
 
         validarCadastro(dto);
 
-        // 3. Valida Duplicidade (Agora comparando Banana com Banana)
         if (credenciaisRepository.findByEmail(emailLimpo).isPresent()) {
-            throw new EntityExistsException("Este email já está em uso: " + emailLimpo);
+            throw new DuplicateResourceException(Constants.MSG_DUPLICADO_EMAIL + " " + emailLimpo);
         }
 
-        // AQUI ESTAVA O BUG: Antes buscávamos o CNPJ com ponto no banco sem ponto.
-        // Agora buscamos o CNPJ limpo.
         if (bibliotecaRepository.findByCnpj(cnpjLimpo).isPresent()) {
-            throw new EntityExistsException("Este CNPJ já está em uso.");
+            throw new DuplicateResourceException(Constants.MSG_DUPLICADO_CNPJ);
         }
 
-        // 4. Geolocalização
         Coordinates coords = geolocationService.getCoordinatesFromAddress(
                         dto.getCep(), dto.getLogradouro(), dto.getNumero(), dto.getCidade())
-                .orElseThrow(() -> new IllegalArgumentException("Endereço inválido ou não encontrado."));
+                .orElseThrow(() -> new IllegalArgumentException(Constants.MSG_ENDERECO_INVALIDO));
 
         if (!ValidationUtil.isValidCoordinates(coords.latitude().doubleValue(), coords.longitude().doubleValue())) {
-            throw new IllegalArgumentException("Coordenadas geográficas inválidas.");
+            throw new IllegalArgumentException(Constants.MSG_COORDENADAS_INVALIDAS);
         }
 
-        // 5. Persistência (Usando as variáveis limpas)
         Endereco endereco = new Endereco();
-        endereco.setCep(cepLimpo); // Usa o limpo
+        endereco.setCep(cepLimpo);
         endereco.setLogradouro(dto.getLogradouro());
         endereco.setNumero(dto.getNumero());
         endereco.setComplemento(dto.getComplemento());
@@ -115,8 +110,8 @@ public class AuthenticationService {
         Biblioteca biblioteca = new Biblioteca();
         biblioteca.setNomeFantasia(dto.getNomeFantasia());
         biblioteca.setRazaoSocial(dto.getRazaoSocial());
-        biblioteca.setCnpj(cnpjLimpo); // Usa o limpo
-        biblioteca.setTelefone(telefoneLimpo); // Usa o limpo
+        biblioteca.setCnpj(cnpjLimpo);
+        biblioteca.setTelefone(telefoneLimpo);
         biblioteca.setCategoria(dto.getCategoria());
         biblioteca.setSite(dto.getSite());
         biblioteca.setStatus(StatusBiblioteca.PENDENTE);
@@ -124,7 +119,7 @@ public class AuthenticationService {
         Biblioteca savedBiblioteca = bibliotecaRepository.save(biblioteca);
 
         CredencialBiblioteca credenciais = new CredencialBiblioteca();
-        credenciais.setEmail(emailLimpo); // Usa o limpo
+        credenciais.setEmail(emailLimpo);
         credenciais.setSenha(passwordEncoder.encode(dto.getSenha()));
         credenciais.setBiblioteca(savedBiblioteca);
 

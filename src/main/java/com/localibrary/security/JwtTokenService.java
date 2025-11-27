@@ -25,15 +25,10 @@ public class JwtTokenService {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenService.class);
 
-    // O token terá 24h de validade, conforme RNF-09 (configurável)
-    private static long jwtExpirationMs = 86400000; // 24 horas
-
-    // Chave secreta para assinar o token
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // Método para gerar o token
     public String generateToken(Authentication authentication) {
         // O "principal" é o UserDetails que criaremos
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
@@ -44,13 +39,14 @@ public class JwtTokenService {
                 .collect(Collectors.joining(","));
 
         Date now = new Date();
+        long jwtExpirationMs = 86400000;
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         // Adiciona claims personalizados: id, email e roles
         return Jwts.builder()
                 .setSubject(userPrincipal.getUsername())
-                .claim(JWT_CLAIM_ID, userPrincipal.getId())     // Usa constante "id"
-                .claim(JWT_CLAIM_ROLE, roles)                   // Usa constante "role"
+                .claim(JWT_CLAIM_ID, userPrincipal.getId())
+                .claim(JWT_CLAIM_ROLE, roles)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
