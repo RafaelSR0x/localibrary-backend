@@ -27,12 +27,6 @@ jobs:
       - name: Build with Maven
         run: mvn clean install
 
-        env:
-          DB_HOST: ${{ secrets.DB_HOST }} 
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -55,9 +49,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DEDE7D4695694CD2BCC70507F1BC315C }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_201A57B191B041B1B2CDD089BCB64E75 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_6DD1506C79844BC1B0D0F60AAE4B3DB3 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0D79574ADD69481ABFD7C7AEE9341BF7 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7353BC3CAE7040EDB70785719F18D0D1 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9C96859E9E6143908FBF2DEDDE3C0D35 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -66,5 +60,4 @@ jobs:
           app-name: 'localibrary'
           slot-name: 'Production'
           package: '*.jar'
-
           
