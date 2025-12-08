@@ -25,7 +25,7 @@ jobs:
           distribution: 'microsoft'
 
       - name: Build with Maven
-        run: mvn -B -DskipTests clean package
+        run: mvn clean install
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -49,9 +49,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_99A20E3A8A5340659C5BD2E88C74B022 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_25276CA3701647D6A6336594B0C06AA9 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_186E6DD0DB1A4CC9888B54ABDA021ADA }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_48576806D77D4EBB9D3FED3988BCABE5 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_71E627F432AD4D8A8DA8B29D42F188E0 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1259C03B016840F58E6E03EE97E6C18B }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -60,5 +60,4 @@ jobs:
           app-name: 'localibrary'
           slot-name: 'Production'
           package: '*.jar'
-
           
