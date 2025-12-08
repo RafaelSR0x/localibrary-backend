@@ -10,10 +10,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * ? OTIMIZADO: DTO único para detalhes de livro
+ * ? OTIMIZADO: DTO ï¿½nico para detalhes de livro
  * Serve para:
- * - GET /livros/{id} (público - com livros similares)
- * - GET /bibliotecas/{id}/livros/{id} (edição - com quantidade e IDs de gêneros)
+ * - GET /livros/{id} (pï¿½blico - com livros similares)
+ * - GET /bibliotecas/{id}/livros/{id} (ediï¿½ï¿½o - com quantidade e IDs de gï¿½neros)
  */
 @Data
 public class LivroDetalhesDTO {
@@ -27,20 +27,20 @@ public class LivroDetalhesDTO {
     private String resumo;
     private String fotoAutor;
 
-    // Para exibição (público)
+    // Para exibiï¿½ï¿½o (pï¿½blico)
     private Set<String> generos;
 
-    // Para formulário de edição (privado)
+    // Para formulï¿½rio de ediï¿½ï¿½o (privado)
     private Set<Long> generosIds;
 
     // Para acervo (privado)
     private Integer quantidade;
 
-    // Para recomendações (público)
+    // Para recomendaï¿½ï¿½es (pï¿½blico)
     private List<LivroResponseDTO> livrosSimilares;
 
     /**
-     * Construtor para visualização PÚBLICA (RF-05)
+     * Construtor para visualizaï¿½ï¿½o Pï¿½BLICA (RF-05)
      * Usado em: GET /livros/{id}
      */
     public LivroDetalhesDTO(Livro livro) {
@@ -54,16 +54,16 @@ public class LivroDetalhesDTO {
         this.resumo = livro.getResumo();
         this.fotoAutor = livro.getFotoAutor();
 
-        // Nomes dos gêneros (para exibição)
+        // Nomes dos gï¿½neros (para exibiï¿½ï¿½o)
         this.generos = livro.getGeneros().stream()
                 .map(livroGenero -> livroGenero.getGenero().getNomeGenero())
                 .collect(Collectors.toSet());
     }
 
     /**
-     * ? NOVO: Construtor para EDIÇÃO (RF-13)
+     * ? NOVO: Construtor para EDIï¿½ï¿½O (RF-13)
      * Usado em: GET /bibliotecas/{id}/livros/{id}
-     * Inclui IDs de gêneros e quantidade
+     * Inclui IDs de gï¿½neros e quantidade
      */
     public LivroDetalhesDTO(BibliotecaLivro bl) {
         Livro livro = bl.getLivro();
@@ -78,7 +78,7 @@ public class LivroDetalhesDTO {
         this.resumo = livro.getResumo();
         this.fotoAutor = livro.getFotoAutor();
 
-        // ? IDs dos gêneros (para selects/checkboxes no formulário)
+        // ? IDs dos gï¿½neros (para selects/checkboxes no formulï¿½rio)
         this.generosIds = livro.getGeneros().stream()
                 .map(lg -> lg.getGenero().getId())
                 .collect(Collectors.toSet());
@@ -89,7 +89,7 @@ public class LivroDetalhesDTO {
 
     /**
      * Setter para adicionar livros similares (RF-05)
-     * Usado apenas na visualização pública
+     * Usado apenas na visualizaï¿½ï¿½o pï¿½blica
      */
     public void setLivrosSimilares(List<Livro> similares) {
         this.livrosSimilares = similares.stream()

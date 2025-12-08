@@ -14,7 +14,7 @@ import static com.localibrary.util.Constants.REGEX_ISBN;
 
 /**
  * ? NOVO: DTO para atualizar livro completo
- * Permite atualizar todos os campos editáveis
+ * Permite atualizar todos os campos editï¿½veis
  */
 @Data
 public class UpdateLivroRequestDTO {
@@ -22,15 +22,15 @@ public class UpdateLivroRequestDTO {
     @Pattern(regexp = REGEX_ISBN, message = MSG_ISBN_INVALIDO)
     private String isbn;
 
-    @NotBlank(message = "Título é obrigatório")
+    @NotBlank(message = "Tï¿½tulo ï¿½ obrigatï¿½rio")
     private String titulo;
 
-    @NotBlank(message = "Autor é obrigatório")
+    @NotBlank(message = "Autor ï¿½ obrigatï¿½rio")
     private String autor;
 
     private String editora;
 
-    @Min(value = 1000, message = "Ano de publicação inválido")
+    @Min(value = 1000, message = "Ano de publicaï¿½ï¿½o invï¿½lido")
     private Integer anoPublicacao;
 
     private String capa;
@@ -39,10 +39,10 @@ public class UpdateLivroRequestDTO {
 
     private String fotoAutor;
 
-    @NotEmpty(message = "Pelo menos um gênero deve ser selecionado")
+    @NotEmpty(message = "Pelo menos um gï¿½nero deve ser selecionado")
     private Set<Long> generosIds;
 
-    @NotNull(message = "Quantidade é obrigatória")
-    @Min(value = 0, message = "Quantidade não pode ser negativa")
+    @NotNull(message = "Quantidade ï¿½ obrigatï¿½ria")
+    @Min(value = 0, message = "Quantidade nï¿½o pode ser negativa")
     private Integer quantidade;
 }
