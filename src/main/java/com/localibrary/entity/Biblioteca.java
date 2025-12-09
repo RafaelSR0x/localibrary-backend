@@ -71,6 +71,13 @@ public class Biblioteca {
     private List<BibliotecaLivro> livros = new ArrayList<>();
 
     /**
+     * Relacionamento OneToMany com HorarioFuncionamento
+     * Uma biblioteca pode ter múltiplos horários (um por dia da semana)
+     */
+    @OneToMany(mappedBy = "biblioteca", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<HorarioFuncionamento> horariosFuncionamento = new ArrayList<>();
+
+    /**
      * Relacionamento OneToOne com CredencialBiblioteca
      */
     @OneToOne(mappedBy = "biblioteca", cascade = CascadeType.ALL, orphanRemoval = true)

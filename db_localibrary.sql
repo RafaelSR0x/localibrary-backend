@@ -144,6 +144,25 @@ CREATE TABLE tbl_livro_genero (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
+-- ===========================================================
+-- 9. Tabela: tbl_horario_funcionamento — Horários por Dia
+-- ===========================================================
+CREATE TABLE tbl_horario_funcionamento (
+    id_horario BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_biblioteca BIGINT NOT NULL,
+    dia_semana ENUM('DOMINGO','SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO') NOT NULL,
+    horario_abertura TIME,
+    horario_fechamento TIME,
+    fechado BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_horario_biblioteca FOREIGN KEY (id_biblioteca)
+        REFERENCES tbl_biblioteca(id_biblioteca)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    UNIQUE KEY unique_biblioteca_dia (id_biblioteca, dia_semana)
+) ENGINE=InnoDB;
+
 -- ===========================
 -- Inserir os gêneros
 -- ===========================

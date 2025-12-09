@@ -4,6 +4,8 @@ import com.localibrary.enums.CategoriaBiblioteca;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
+import java.util.List;
+
 import static com.localibrary.util.Constants.*;
 
 @Data
@@ -57,4 +59,10 @@ public class BibliotecaRegistrationDTO {
 
     @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     private String estado;
+
+    /**
+     * Lista de horários de funcionamento (opcional)
+     * Se não fornecido, a biblioteca ficará sem horários cadastrados
+     */
+    private List<HorarioFuncionamentoDTO> horariosFuncionamento;
 }
