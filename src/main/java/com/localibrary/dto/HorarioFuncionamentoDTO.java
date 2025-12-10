@@ -28,6 +28,6 @@ public class HorarioFuncionamentoDTO {
         this.horarioFechamento = horario.getHorarioFechamento() != null 
             ? horario.getHorarioFechamento().toString() 
             : null;
-        this.fechado = horario.getFechado();
+        this.fechado = horario.isFechado();
     }
 }
