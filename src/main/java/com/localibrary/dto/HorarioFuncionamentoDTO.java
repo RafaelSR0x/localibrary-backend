@@ -1,5 +1,6 @@
 package com.localibrary.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.localibrary.entity.HorarioFuncionamento;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,7 +16,9 @@ public class HorarioFuncionamentoDTO {
     private String diaSemana;
     private String horarioAbertura;
     private String horarioFechamento;
-    private Boolean fechado;
+    
+    @JsonProperty
+    private boolean fechado;
 
     public HorarioFuncionamentoDTO(HorarioFuncionamento horario) {
         this.diaSemana = horario.getDiaSemana().name();
