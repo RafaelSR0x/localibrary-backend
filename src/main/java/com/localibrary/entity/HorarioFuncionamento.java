@@ -41,7 +41,7 @@ public class HorarioFuncionamento {
     private LocalTime horarioFechamento;
 
     @Column(nullable = false)
-    private boolean fechado = false;
+    private Boolean fechado = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
