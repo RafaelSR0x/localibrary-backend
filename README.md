@@ -10,8 +10,8 @@
 ### Com Docker (Recomendado)
 ```bash
   # 1. Clonar repositório
-  git clone https://github.com/osantosrei/localibrary-api.git
-  cd localibrary-api
+  git clone https://github.com/RafaelSR0x/localibrary-backend.git
+  cd localibrary-backend
   
   # 2. Copiar arquivo de ambiente
   cp .env.example .env
